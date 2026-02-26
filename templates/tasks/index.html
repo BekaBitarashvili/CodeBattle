@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}ტასკები{% endblock %}
+
+{% block content %}
+<section class="section-pad">
+  <div class="reveal">
+    <div class="section-eyebrow" data-ka="გამოწვევები" data-en="Challenges">გამოწვევები</div>
+    <h1 class="section-title" data-ka="ტასკები სირთულის მიხედვით" data-en="Tasks by Difficulty">ტასკები სირთულის მიხედვით</h1>
+  </div>
+
+  <div class="difficulty-tabs">
+    <a href="{{ url_for('tasks.index', difficulty='easy') }}"
+       class="diff-tab {% if difficulty=='easy' %}active{% endif %}" data-level="easy">
+       🟢 <span data-ka="მარტივი" data-en="Easy">მარტივი</span>
+    </a>
+    <a href="{{ url_for('tasks.index', difficulty='medium') }}"
+       class="diff-tab {% if difficulty=='medium' %}active{% endif %}" data-level="medium">
+       🟡 <span data-ka="საშუალო" data-en="Medium">საშუალო</span>
+    </a>
+    <a href="{{ url_for('tasks.index', difficulty='hard') }}"
+       class="diff-tab {% if difficulty=='hard' %}active{% endif %}" data-level="hard">
+       🔴 <span data-ka="რთული" data-en="Hard">რთული</span>
+    </a>
+  </div>
+
+  <div class="task-list reveal">
+    {% for task in tasks %}
+    <a href="{{ url_for('tasks.detail', task_id=task.id) }}" class="task-card">
+      <div class="task-badge {{ task.difficulty }}"></div>
+      <div class="task-name">{{ task.title }}</div>
+      <div style="color:var(--muted);font-size:.8rem;flex:1">{{ task.solve_count() }} <span data-ka="ამოხსნა" data-en="solves">ამოხსნა</span></div>
+      <div class="task-xp">+{{ task.xp }} XP</div>
+      <div class="task-arrow">›</div>
+    </a>
+    {% else %}
+    <p class="muted-text" data-ka="ტასკები არ მოიძებნა." data-en="No tasks found.">ტასკები არ მოიძებნა.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

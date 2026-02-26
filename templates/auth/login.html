@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}შესვლა{% endblock %}
+{% block content %}
+<section style="display:flex;align-items:center;justify-content:center;min-height:80vh;padding:2rem">
+  <div style="width:100%;max-width:420px">
+    <div class="modal" style="position:relative;display:block;transform:none;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:2.5rem">
+      <div class="modal-title" data-ka="კეთილი იყოს შენი მობრძანება" data-en="Welcome back">კეთილი იყოს შენი მობრძანება</div>
+      <div class="modal-sub" data-ka="შედი შენს ანგარიშში" data-en="Login to your account">შედი შენს ანგარიშში</div>
+      <form method="POST">
+        <div class="input-group">
+          <label data-ka="ელ-ფოსტა" data-en="Email">ელ-ფოსტა</label>
+          <input type="email" name="email" placeholder="you@example.com" required/>
+        </div>
+        <div class="input-group">
+          <label data-ka="პაროლი" data-en="Password">პაროლი</label>
+          <input type="password" name="password" placeholder="••••••••" required/>
+        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for cat, msg in messages %}<div class="form-error">{{ msg }}</div>{% endfor %}
+        {% endwith %}
+        <button type="submit" class="btn-primary btn-block" style="margin-top:.5rem" data-ka="შესვლა" data-en="Login">შესვლა</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

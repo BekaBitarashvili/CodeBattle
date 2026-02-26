@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}ოლიმპიადა{% endblock %}
+{% block content %}
+<section class="section-pad">
+  <div class="reveal">
+    <div class="section-eyebrow" data-ka="შეჯიბრება" data-en="Competition">შეჯიბრება</div>
+    <h1 class="section-title" data-ka="ოლიმპიადა" data-en="Olympiad">ოლიმპიადა</h1>
+  </div>
+
+  {% if olympiads %}
+    {% for o in olympiads %}
+    <div class="olympiad-card reveal">
+      <div>
+        <div class="olympiad-title">{{ o.title_ka if session.get('lang','ka')=='ka' else o.title_en }}</div>
+        <div class="olympiad-meta">
+          {{ o.start_date.strftime('%d %B') }} — {{ o.end_date.strftime('%d %B %Y') }}
+          {% if o.is_ongoing %}<span class="live-chip">🔴 LIVE</span>{% endif %}
+        </div>
+        {% if o.prize_info %}
+          <div class="prize-chip" style="margin-bottom:1.2rem">🏆 {{ o.prize_info }}</div>
+        {% endif %}
+        <div style="display:flex;gap:.8rem">
+          <a href="{{ url_for('olympiad.detail', olympiad_id=o.id) }}" class="btn-primary" style="padding:12px 28px;font-size:.95rem;text-decoration:none">
+            <span data-ka="დეტალები" data-en="Details">დეტალები</span>
+          </a>
+        </div>
+      </div>
+      <div class="olympiad-img">🏆</div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="olympiad-card reveal" style="justify-content:center;text-align:center">
+      <p style="color:var(--muted)" data-ka="მალე იქნება ახალი ოლიმპიადა!" data-en="New olympiad coming soon!">
+        მალე იქნება ახალი ოლიმპიადა! 🚀
+      </p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

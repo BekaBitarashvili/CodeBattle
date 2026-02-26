@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+{% block title %}{{ t("დახმარება", "Help") }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── HELP PAGE ──────────────────────────────── */
+.help-hero {
+  padding: 7rem clamp(1rem,5vw,4rem) 2.5rem;
+  text-align: center;
+}
+.help-hero-eyebrow {
+  font-size: .78rem; font-weight: 700; letter-spacing: .14em;
+  color: var(--orange); text-transform: uppercase; margin-bottom: .8rem;
+}
+.help-hero-title {
+  font-size: clamp(2rem,5vw,3.4rem);
+  font-weight: 900; margin-bottom: 1rem; line-height: 1.1;
+}
+.help-hero-desc {
+  color: var(--muted); font-size: 1rem;
+  max-width: 520px; margin: 0 auto 2rem; line-height: 1.7;
+}
+.help-search-wrap {
+  max-width: 460px; margin: 0 auto;
+  position: relative;
+}
+.help-search {
+  width: 100%; padding: 14px 20px 14px 48px;
+  border-radius: 14px; border: 1px solid var(--border);
+  background: var(--bg3); color: var(--text);
+  font-size: 1rem; font-family: 'Outfit', sans-serif;
+  transition: border-color .2s, box-shadow .2s;
+}
+.help-search:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange)22; }
+.help-search-icon {
+  position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+  font-size: 1.1rem; color: var(--muted); pointer-events: none;
+}
+
+/* ── CATEGORY TABS ──────────────────────────── */
+.faq-tabs {
+  display: flex; gap: .5rem; justify-content: center;
+  padding: 0 clamp(1rem,5vw,4rem) 2.5rem; flex-wrap: wrap;
+}
+.faq-tab-btn {
+  padding: 8px 20px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--card); color: var(--muted);
+  font-size: .85rem; font-weight: 700; cursor: pointer;
+  font-family: 'Outfit', sans-serif; transition: all .2s;
+  backdrop-filter: blur(8px);
+}
+.faq-tab-btn:hover, .faq-tab-btn.active {
+  border-color: var(--orange); color: var(--orange);
+  background: var(--orange)12;
+}
+
+/* ── FAQ CONTAINER ──────────────────────────── */
+.faq-container {
+  max-width: 760px; margin: 0 auto;
+  padding: 0 clamp(1rem,5vw,4rem) 5rem;
+}
+
+/* ── FAQ CATEGORY GROUP ─────────────────────── */
+.faq-group { margin-bottom: 2.5rem; }
+.faq-group-title {
+  display: flex; align-items: center; gap: .6rem;
+  font-size: .75rem; font-weight: 800; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--orange);
+  margin-bottom: 1rem; padding-bottom: .6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── FAQ ITEM ───────────────────────────────── */
+.faq-item {
+  border-bottom: 1px solid var(--border);
+  transition: background .2s;
+}
+.faq-item:last-child { border-bottom: none; }
+
+.faq-q {
+  width: 100%; text-align: left; background: none; border: none;
+  padding: 1.3rem 0; display: flex; align-items: center;
+  justify-content: space-between; gap: 1rem;
+  font-size: .98rem; font-weight: 600; color: var(--text);
+  cursor: pointer; font-family: 'Outfit', sans-serif;
+  transition: color .2s;
+}
+.faq-q:hover { color: var(--orange); }
+
+.faq-q-left { display: flex; align-items: center; gap: .8rem; }
+.faq-bullet {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--orange); flex-shrink: 0;
+  opacity: .5; transition: opacity .2s, transform .2s;
+}
+.faq-item.open .faq-bullet { opacity: 1; transform: scale(1.4); }
+.faq-item.open .faq-q { color: var(--orange); }
+
+.faq-chevron {
+  flex-shrink: 0; width: 26px; height: 26px;
+  border-radius: 7px; background: var(--bg3);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; color: var(--muted);
+  transition: transform .3s, background .2s, border-color .2s;
+}
+.faq-item.open .faq-chevron {
+  transform: rotate(180deg);
+  background: var(--orange)20;
+  border-color: var(--orange)44;
+  color: var(--orange);
+}
+
+.faq-a {
+  max-height: 0; overflow: hidden;
+  transition: max-height .38s ease, padding .3s;
+  color: var(--muted); font-size: .93rem; line-height: 1.75;
+  padding-left: calc(.8rem + 7px + .8rem);
+}
+.faq-item.open .faq-a { max-height: 300px; padding-bottom: 1.3rem; }
+
+/* ── NO RESULTS ─────────────────────────────── */
+.no-results {
+  text-align: center; padding: 4rem 2rem; color: var(--muted);
+  display: none;
+}
+.no-results-icon { font-size: 3rem; margin-bottom: .8rem; }
+
+/* ── CONTACT CTA ────────────────────────────── */
+.help-cta {
+  background: linear-gradient(135deg, var(--bg3), var(--bg2));
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3rem 2.5rem; text-align: center;
+  margin: 0 clamp(1rem,5vw,4rem) 5rem;
+  position: relative; overflow: hidden;
+}
+.help-cta::before {
+  content: '';
+  position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+  width: 320px; height: 320px;
+  background: radial-gradient(circle, var(--orange)15, transparent 70%);
+  pointer-events: none;
+}
+.help-cta-title { font-size: 1.5rem; font-weight: 900; margin-bottom: .6rem; position: relative; }
+.help-cta-sub   { color: var(--muted); margin-bottom: 1.5rem; position: relative; }
+
+@media (max-width: 600px) {
+  .faq-tabs { gap: .4rem; }
+  .faq-tab-btn { padding: 6px 14px; font-size: .8rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── HERO ── #}
+<div class="help-hero reveal">
+  <div class="help-hero-eyebrow">{{ t("დახმარების ცენტრი", "Help Center") }}</div>
+  <h1 class="help-hero-title">{{ t("როგორ შეგვიძლია დაგეხმაროთ?", "How can we help you?") }}</h1>
+  <p class="help-hero-desc">
+    {{ t(
+      "ქვემოთ იპოვით ყველაზე ხშირად დასმულ კითხვებს. ვერ პოულობთ პასუხს? დაგვიკავშირდით.",
+      "Below you'll find the most frequently asked questions. Can't find your answer? Contact us."
+    ) }}
+  </p>
+  <div class="help-search-wrap">
+    <span class="help-search-icon">🔍</span>
+    <input type="text" class="help-search" id="faqSearch"
+           placeholder="{{ t('კითხვის ძებნა...', 'Search questions...') }}"
+           oninput="filterFaq(this.value)"/>
+  </div>
+</div>
+
+{# ── CATEGORY TABS ── #}
+<div class="faq-tabs">
+  <button class="faq-tab-btn active" onclick="showGroup('all', this)">{{ t("ყველა", "All") }}</button>
+  <button class="faq-tab-btn" onclick="showGroup('general', this)">{{ t("ზოგადი", "General") }}</button>
+  <button class="faq-tab-btn" onclick="showGroup('tasks', this)">{{ t("ტასკები", "Tasks") }}</button>
+  <button class="faq-tab-btn" onclick="showGroup('account', this)">{{ t("ანგარიში", "Account") }}</button>
+  <button class="faq-tab-btn" onclick="showGroup('olympiad', this)">{{ t("ოლიმპიადა", "Olympiad") }}</button>
+  <button class="faq-tab-btn" onclick="showGroup('badges', this)">{{ t("ბეჯები & XP", "Badges & XP") }}</button>
+</div>
+
+{# ── FAQ CONTAINER ── #}
+<div class="faq-container">
+
+  {# ── GENERAL ── #}
+  <div class="faq-group reveal" data-group="general">
+    <div class="faq-group-title">
+      <span>🌐</span> {{ t("ზოგადი კითხვები", "General Questions") }}
+    </div>
+
+    {% set general_faqs = [
+      (t("რა არის CodeMama?","What is CodeMama?"),
+       t("CodeMama არის ქართული საგანმანათლებლო პლატფორმა პროგრამისტებისთვის. აქ შეგიძლიათ ამოხსნათ კოდინგის ამოცანები, მიიღოთ მონაწილეობა ოლიმპიადებში, დაგროვოთ XP და ბეჯები.",
+         "CodeMama is a Georgian educational platform for programmers. Here you can solve coding tasks, participate in olympiads, and earn XP and badges.")),
+      (t("CodeMama უფასოა?","Is CodeMama free?"),
+       t("დიახ, ძირითადი ფუნქციები სრულად უფასოა. რეგისტრაცია, ტასკები, ლიდერბორდი — ყველაფერი ხელმისაწვდომია.",
+         "Yes, all core features are completely free. Registration, tasks, leaderboard — everything is accessible.")),
+      (t("რომელ ენებზეა ხელმისაწვდომი პლატფორმა?","What languages is the platform available in?"),
+       t("პლატფორმა ხელმისაწვდომია ქართულ და ინგლისურ ენებზე. ენის გადარტვა შეგიძლიათ ნავბარის ენის ღილაკით.",
+         "The platform is available in Georgian and English. You can switch languages using the language button in the navbar.")),
+      (t("მობილურ მოწყობილობაზე მუშაობს?","Does it work on mobile?"),
+       t("დიახ, CodeMama სრულად რესფონსიულია და ოპტიმიზებულია მობილური მოწყობილობებისთვის.",
+         "Yes, CodeMama is fully responsive and optimized for mobile devices.")),
+    ] %}
+    {% for q, a in general_faqs %}
+    <div class="faq-item" data-group="general">
+      <button class="faq-q">
+        <span class="faq-q-left"><span class="faq-bullet"></span>{{ q }}</span>
+        <span class="faq-chevron">▾</span>
+      </button>
+      <div class="faq-a">{{ a }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── TASKS ── #}
+  <div class="faq-group reveal" data-group="tasks">
+    <div class="faq-group-title">
+      <span>🎯</span> {{ t("ტასკები", "Tasks") }}
+    </div>
+
+    {% set tasks_faqs = [
+      (t("სირთულის დონეები რა განსხვავებაა?","What's the difference between difficulty levels?"),
+       t("მარტივი (Easy) — დამწყებთათვის, 20-30 XP. საშუალო (Medium) — გამოცდილი პროგრამისტებისთვის, 70-90 XP. რთული (Hard) — ექსპერტებისთვის, 150-180 XP.",
+         "Easy — for beginners, 20-30 XP. Medium — for experienced programmers, 70-90 XP. Hard — for experts, 150-180 XP.")),
+      (t("რომელ პროგრამირების ენებს უჭერს მხარს?","Which programming languages are supported?"),
+       t("Python, JavaScript, C++ და Java. სამომავლოდ დაემატება Go, Rust და სხვა.",
+         "Python, JavaScript, C++ and Java. Go, Rust and others will be added in the future.")),
+      (t("ტასკის ამოხსნა ადრე ჩავრთე — ხელახლა ვცადე, XP-ი ხელახლა მიიღება?","If I solve a task again, do I earn XP again?"),
+       t("არა, XP-ი მხოლოდ პირველი წარმატებული ამოხსნისთვის გეძლევათ.",
+         "No, XP is only awarded for the first successful submission.")),
+      (t("გადაწყვეტა ყოველთვის მოწმდება?","Is every solution always checked?"),
+       t("დიახ, ყოველი გაგზავნა ავტომატურად ტესტდება. სამომავლოდ ინტეგრირდება Judge0-ის სრული ტესტ-სისტემა.",
+         "Yes, every submission is automatically tested. Full Judge0 test system integration is coming in the future.")),
+    ] %}
+    {% for q, a in tasks_faqs %}
+    <div class="faq-item" data-group="tasks">
+      <button class="faq-q">
+        <span class="faq-q-left"><span class="faq-bullet"></span>{{ q }}</span>
+        <span class="faq-chevron">▾</span>
+      </button>
+      <div class="faq-a">{{ a }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── ACCOUNT ── #}
+  <div class="faq-group reveal" data-group="account">
+    <div class="faq-group-title">
+      <span>👤</span> {{ t("ანგარიში", "Account") }}
+    </div>
+
+    {% set account_faqs = [
+      (t("როგორ ვიწყებ?","How do I get started?"),
+       t("დააჭირეთ 'რეგისტრაცია' ღილაკს ნავბარში, შეიყვანეთ სახელი, ელ-ფოსტა და პაროლი. სულ ეს არის!",
+         "Click the 'Sign up' button in the navbar, enter your username, email and password. That's it!")),
+      (t("პაროლი დამავიწყდა, რა ვქნა?","I forgot my password, what do I do?"),
+       t("პაროლის აღდგენის ფუნქცია მალე დაემატება. ამჟამად, გთხოვთ, დაგვიკავშირდეთ ელ-ფოსტით.",
+         "Password recovery is coming soon. For now, please contact us by email.")),
+      (t("ანგარიში შეიძლება წავშალო?","Can I delete my account?"),
+       t("დიახ, ანგარიშის წასაშლელად დაგვიკავშირდით support@codemama.ge-ზე.",
+         "Yes, to delete your account please contact us at support@codemama.ge.")),
+      (t("ორი ანგარიში შეიძლება გქონდეს?","Can I have two accounts?"),
+       t("არა, სისტემა ბლოკავს ერთი ელ-ფოსტით ორ ანგარიშს. ამ წესის დარღვევა გამოიწვევს ბლოკს.",
+         "No, the system blocks two accounts with the same email. Violating this rule will result in a ban.")),
+    ] %}
+    {% for q, a in account_faqs %}
+    <div class="faq-item" data-group="account">
+      <button class="faq-q">
+        <span class="faq-q-left"><span class="faq-bullet"></span>{{ q }}</span>
+        <span class="faq-chevron">▾</span>
+      </button>
+      <div class="faq-a">{{ a }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── OLYMPIAD ── #}
+  <div class="faq-group reveal" data-group="olympiad">
+    <div class="faq-group-title">
+      <span>🏆</span> {{ t("ოლიმპიადა", "Olympiad") }}
+    </div>
+
+    {% set olympiad_faqs = [
+      (t("ოლიმპიადაში მონაწილეობა ყველასთვის ხელმისაწვდომია?","Is the olympiad open to everyone?"),
+       t("დიახ, ნებისმიერ რეგისტრირებულ მომხმარებელს შეუძლია მონაწილეობა.",
+         "Yes, any registered user can participate.")),
+      (t("ოლიმპიადის ფორმატი?","What is the olympiad format?"),
+       t("ჩვეულებრივ 5 საათი, 10 ამოცანა. ქულა = სისწრაფე × სირთულე. ლაივ ლიდერბორდი იმავდროულად განახლდება.",
+         "Typically 5 hours, 10 tasks. Score = speed × difficulty. Live leaderboard updates in real time.")),
+      (t("ჯილდოები რეალურია?","Are the prizes real?"),
+       t("დიახ, ყველა გამოცხადებული ჯილდო რეალურია და პარტნიორების მხარდაჭერით გადაეცემა გამარჯვებულებს.",
+         "Yes, all announced prizes are real and delivered to winners with partner support.")),
+      (t("Olympiad Win ბეჯი ყველა ოლიმპიადაზე გეძლევა?","Is the Olympiad Win badge given for every olympiad?"),
+       t("მხოლოდ პირველი ადგილის დამჭერს ეძლევა Olympiad Win ბეჯი.",
+         "Only the first-place winner receives the Olympiad Win badge.")),
+    ] %}
+    {% for q, a in olympiad_faqs %}
+    <div class="faq-item" data-group="olympiad">
+      <button class="faq-q">
+        <span class="faq-q-left"><span class="faq-bullet"></span>{{ q }}</span>
+        <span class="faq-chevron">▾</span>
+      </button>
+      <div class="faq-a">{{ a }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── BADGES & XP ── #}
+  <div class="faq-group reveal" data-group="badges">
+    <div class="faq-group-title">
+      <span>🎖️</span> {{ t("ბეჯები & XP", "Badges & XP") }}
+    </div>
+
+    {% set badges_faqs = [
+      (t("XP რისთვის გამოიყენება?","What is XP used for?"),
+       t("XP განსაზღვრავს შენს Level-ს და ლიდერბორდის პოზიციას. 500 XP = 1 Level. Level ესახება პროფილსა და ლიდერბორდზე.",
+         "XP determines your Level and leaderboard position. 500 XP = 1 Level. Your level is shown on your profile and leaderboard.")),
+      (t("Daily Streak — რა წესები?","Daily Streak — what are the rules?"),
+       t("ყოველ დღე ერთი ტასკის ამოხსნა streak-ს ინარჩუნებს. ერთი დღის გამოტოვება streak-ს შლის. 7 დღე = ⚔️ Warrior, 30 დღე = 🔥 On Fire.",
+         "Solving one task daily maintains your streak. Missing one day resets it. 7 days = ⚔️ Warrior, 30 days = 🔥 On Fire.")),
+      (t("First Blood ბეჯი — პირველი ამოხსნა?","First Blood badge — first solve?"),
+       t("დიახ, First Blood ბეჯი ეძლევა პლატფორმაზე პირველი წარმატებული ამოხსნისთვის.",
+         "Yes, First Blood badge is awarded for your very first successful solve on the platform.")),
+      (t("Speed Demon ბეჯი — 5 წუთზე ნაკლები?","Speed Demon badge — under 5 minutes?"),
+       t("Speed Demon ეძლევა, თუ ტასკი ამოხსნი 5 წუთზე (300 წამზე) ნაკლებ დროში გადაცემის მომენტიდან.",
+         "Speed Demon is awarded if you solve a task in less than 5 minutes (300 seconds) from submission time.")),
+    ] %}
+    {% for q, a in badges_faqs %}
+    <div class="faq-item" data-group="badges">
+      <button class="faq-q">
+        <span class="faq-q-left"><span class="faq-bullet"></span>{{ q }}</span>
+        <span class="faq-chevron">▾</span>
+      </button>
+      <div class="faq-a">{{ a }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="no-results reveal" id="noResults">
+    <div class="no-results-icon">🔍</div>
+    <p>{{ t("კითხვა ვერ მოიძებნა. სცადე სხვა სიტყვები.", "Question not found. Try different keywords.") }}</p>
+  </div>
+
+</div>
+
+{# ── CONTACT CTA ── #}
+<div class="help-cta reveal">
+  <div class="help-cta-title">{{ t("კვლავ გჭირდება დახმარება?", "Still need help?") }}</div>
+  <p class="help-cta-sub">
+    {{ t("ჩვენი გუნდი მზადაა დაგეხმაროთ. მოგვწერეთ!", "Our team is ready to help. Write to us!") }}
+  </p>
+  <a href="mailto:support@codemama.ge" class="btn-primary" style="font-size:1rem;padding:13px 32px;text-decoration:none">
+    📧 support@codemama.ge
+  </a>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── FAQ TOGGLE ── */
+document.querySelectorAll('.faq-item').forEach(item => {
+  item.querySelector('.faq-q').addEventListener('click', () => {
+    const wasOpen = item.classList.contains('open');
+    // Close all in same group
+    item.closest('.faq-group').querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  });
+});
+
+/* ── CATEGORY FILTER ── */
+function showGroup(group, btn) {
+  document.querySelectorAll('.faq-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.faq-group').forEach(g => {
+    g.style.display = (group === 'all' || g.dataset.group === group) ? '' : 'none';
+  });
+  document.getElementById('faqSearch').value = '';
+  document.getElementById('noResults').style.display = 'none';
+}
+
+/* ── SEARCH FILTER ── */
+function filterFaq(query) {
+  const q = query.toLowerCase().trim();
+  let anyVisible = false;
+  document.querySelectorAll('.faq-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    const show = !q || text.includes(q);
+    item.style.display = show ? '' : 'none';
+    if (show) anyVisible = true;
+  });
+  // Show/hide groups with no visible items
+  document.querySelectorAll('.faq-group').forEach(g => {
+    const visItems = [...g.querySelectorAll('.faq-item')].filter(i => i.style.display !== 'none');
+    g.style.display = visItems.length ? '' : 'none';
+  });
+  document.getElementById('noResults').style.display = anyVisible ? 'none' : 'block';
+  // Reset tab active state when searching
+  if (q) {
+    document.querySelectorAll('.faq-tab-btn').forEach(b => b.classList.remove('active'));
+  }
+}
+</script>
+{% endblock %}

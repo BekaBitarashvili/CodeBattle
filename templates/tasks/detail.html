@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}{{ task.title }}{% endblock %}
+
+{% block content %}
+<section class="section-pad">
+  <div style="margin-bottom:1.5rem">
+    <a href="{{ url_for('tasks.index', difficulty=task.difficulty) }}" class="back-link">← <span data-ka="უკან" data-en="Back">უკან</span></a>
+  </div>
+
+  <div class="tasks-detail-grid">
+    <div>
+      <div class="diff-chip diff-chip--{{ task.difficulty }}">{{ task.difficulty }}</div>
+      <h1 style="font-size:2rem;font-weight:900;margin:.7rem 0">{{ task.title }}</h1>
+      <p style="color:var(--muted);line-height:1.7;margin-bottom:2rem">{{ task.description }}</p>
+
+      <div style="display:flex;gap:1rem;margin-bottom:2rem">
+        <div class="prize-chip">⚡ +{{ task.xp }} XP</div>
+        <div class="prize-chip">👥 {{ task.solve_count() }} <span data-ka="ამოხსნა" data-en="solves">ამოხსნა</span></div>
+      </div>
+
+      {% if user_solved %}
+        <div class="solved-banner">✅ <span data-ka="ამოხსნილია!" data-en="Solved!">ამოხსნილია!</span></div>
+      {% endif %}
+    </div>
+
+    {# Code editor area #}
+    <div class="editor-card">
+      <div class="terminal-bar" style="border-radius:var(--radius) var(--radius) 0 0">
+        <div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div>
+        <select id="langSelect" style="margin-left:auto;background:var(--bg3);border:none;color:var(--muted);font-size:.8rem;padding:2px 6px;border-radius:4px">
+          <option value="python">Python</option>
+          <option value="javascript">JavaScript</option>
+          <option value="cpp">C++</option>
+          <option value="java">Java</option>
+        </select>
+      </div>
+      <textarea id="codeEditor" class="code-editor" placeholder="# კოდი აქ...&#10;def solution():&#10;    pass" spellcheck="false"></textarea>
+      <div style="padding:1rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:.8rem">
+        <button class="btn-ghost" onclick="clearEditor()" data-ka="გასუფთავება" data-en="Clear">გასუფთავება</button>
+        {% if current_user.is_authenticated %}
+          <button class="btn-primary" id="submitBtn" onclick="submitSolution({{ task.id }})" data-ka="გაგზავნა" data-en="Submit">გაგზავნა</button>
+        {% else %}
+          <button class="btn-primary" onclick="openModal('login')" data-ka="შედი და გაგზავნე" data-en="Login to Submit">შედი და გაგზავნე</button>
+        {% endif %}
+      </div>
+      <div id="submitResult" style="padding:0 1rem 1rem;font-size:.9rem;display:none"></div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function clearEditor() { document.getElementById('codeEditor').value = ''; }
+
+async function submitSolution(taskId) {
+  const btn = document.getElementById('submitBtn');
+  const code = document.getElementById('codeEditor').value;
+  const lang = document.getElementById('langSelect').value;
+  const res  = document.getElementById('submitResult');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ ...';
+  res.style.display = 'none';
+
+  try {
+    const r = await fetch(`/tasks/${taskId}/submit`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ code, language: lang }),
+    });
+    const data = await r.json();
+    res.style.display = 'block';
+    res.style.color = data.ok ? '#4caf50' : '#f44336';
+    res.textContent = data.message;
+    if(data.ok && data.xp_gained > 0) showXP(`+${data.xp_gained} XP`);
+  } catch(e) {
+    res.style.display = 'block';
+    res.textContent = 'კავშირის შეცდომა.';
+  }
+  btn.disabled = false;
+  btn.textContent = 'გაგზავნა';
+}
+</script>
+{% endblock %}

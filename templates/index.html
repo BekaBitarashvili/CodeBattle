@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% block title %}{{ t("მთავარი", "Home") }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── NEWS PAGE ─────────────────────────────── */
+.news-hero {
+  padding: 7rem clamp(1rem,5vw,4rem) 2rem;
+  text-align: center;
+  position: relative;
+}
+.news-hero-eyebrow {
+  font-size: .78rem; font-weight: 700; letter-spacing: .14em;
+  color: var(--orange); text-transform: uppercase; margin-bottom: .8rem;
+}
+.news-hero-title {
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  font-weight: 900; line-height: 1.1; margin-bottom: 1rem;
+}
+.news-hero-sub {
+  color: var(--muted); font-size: 1rem; max-width: 520px; margin: 0 auto 3rem;
+}
+
+/* ── NEWS GRID ─────────────────────────────── */
+.news-grid {
+  max-width: 900px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 1.8rem;
+  padding: 0 clamp(1rem,5vw,4rem) 3rem;
+}
+
+/* ── NEWS CARD ─────────────────────────────── */
+.news-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2rem 2.4rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.5rem;
+  align-items: start;
+  cursor: pointer;
+  transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+  backdrop-filter: blur(12px);
+  text-decoration: none;
+  color: var(--text);
+  position: relative;
+  overflow: hidden;
+}
+.news-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 4px; height: 100%;
+  background: linear-gradient(180deg, var(--orange), var(--orange2));
+  transform: scaleY(0); transform-origin: top;
+  transition: transform .3s ease;
+  border-radius: 4px 0 0 4px;
+}
+.news-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 52px #00000055, 0 0 0 1px var(--orange)22;
+  border-color: var(--orange)33;
+}
+.news-card:hover::before { transform: scaleY(1); }
+
+.news-emoji {
+  width: 58px; height: 58px; border-radius: 16px;
+  background: linear-gradient(135deg, var(--orange)20, var(--blue)20);
+  border: 1px solid var(--orange)25;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.7rem; flex-shrink: 0;
+  transition: transform .3s;
+}
+.news-card:hover .news-emoji { transform: scale(1.12) rotate(-5deg); }
+
+.news-body {}
+
+.news-meta {
+  display: flex; align-items: center; gap: .8rem;
+  margin-bottom: .6rem; flex-wrap: wrap;
+}
+.news-category {
+  font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--orange);
+  background: var(--orange)18; border: 1px solid var(--orange)30;
+  border-radius: 6px; padding: 3px 10px;
+}
+.news-date {
+  font-size: .75rem; color: var(--muted);
+  font-family: 'Space Mono', monospace;
+}
+
+.news-title {
+  font-size: 1.18rem; font-weight: 700;
+  line-height: 1.35; margin-bottom: .55rem;
+  transition: color .2s;
+}
+.news-card:hover .news-title { color: var(--orange); }
+
+.news-excerpt {
+  color: var(--muted); font-size: .9rem; line-height: 1.65;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.news-read-more {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .82rem; font-weight: 700;
+  color: var(--orange); margin-top: .8rem;
+  opacity: 0; transform: translateX(-6px);
+  transition: opacity .25s, transform .25s;
+}
+.news-card:hover .news-read-more { opacity: 1; transform: translateX(0); }
+
+/* ── PAGINATION ─────────────────────────────── */
+.pagination {
+  display: flex; align-items: center; justify-content: center;
+  gap: .5rem; padding: 1rem clamp(1rem,5vw,4rem) 5rem;
+  flex-wrap: wrap;
+}
+.page-btn {
+  min-width: 42px; height: 42px; border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card); color: var(--muted);
+  font-size: .9rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none; transition: all .2s;
+  font-family: 'Space Mono', monospace; padding: 0 .8rem;
+}
+.page-btn:hover { border-color: var(--orange); color: var(--orange); }
+.page-btn.active {
+  background: var(--orange); border-color: var(--orange);
+  color: #fff; box-shadow: 0 6px 18px #ff572244;
+}
+.page-btn.disabled { opacity: .35; pointer-events: none; }
+.page-dots { color: var(--muted); padding: 0 .3rem; line-height: 42px; }
+
+/* ── EMPTY STATE ─────────────────────────────── */
+.empty-news {
+  text-align: center; padding: 6rem 2rem;
+  color: var(--muted);
+}
+.empty-news-icon { font-size: 4rem; margin-bottom: 1rem; }
+
+@media (max-width: 600px) {
+  .news-card { grid-template-columns: 1fr; gap: 1rem; padding: 1.5rem; }
+  .news-emoji { width: 48px; height: 48px; font-size: 1.4rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── HERO ── #}
+<div class="news-hero reveal">
+  <div class="news-hero-eyebrow">{{ t("სიახლეები და განახლებები", "News & Updates") }}</div>
+  <h1 class="news-hero-title">
+    {{ t("რა ხდება", "What's happening") }}<br/>
+    <span class="accent">CodeMama</span>-{{ t("ზე?", "?") }}
+  </h1>
+  <p class="news-hero-sub">
+    {{ t("პლატფორმის უახლესი სიახლეები, განახლებები და გამოცხადებები.", "Latest platform news, updates and announcements.") }}
+  </p>
+</div>
+
+{# ── NEWS CARDS ── #}
+<div class="news-grid">
+  {% if news %}
+    {% for item in news %}
+    <article class="news-card reveal" style="transition-delay: {{ loop.index0 * 0.05 }}s">
+      <div class="news-emoji">{{ item.emoji }}</div>
+      <div class="news-body">
+        <div class="news-meta">
+          <span class="news-category">
+            {{ item.category_ka if lang == 'ka' else item.category_en }}
+          </span>
+          <span class="news-date">
+            {{ item.created_at.strftime('%d %b %Y') }}
+          </span>
+        </div>
+        <div class="news-title">
+          {{ item.title_ka if lang == 'ka' else item.title_en }}
+        </div>
+        <p class="news-excerpt">
+          {{ item.body_ka if lang == 'ka' else item.body_en }}
+        </p>
+        <span class="news-read-more">
+          {{ t("დაწვრილებით", "Read more") }} →
+        </span>
+      </div>
+    </article>
+    {% endfor %}
+  {% else %}
+    <div class="empty-news">
+      <div class="empty-news-icon">📭</div>
+      <p>{{ t("სიახლეები ჯერ არ არის.", "No news yet.") }}</p>
+    </div>
+  {% endif %}
+</div>
+
+{# ── PAGINATION ── #}
+{% if pagination and pagination.pages > 1 %}
+<div class="pagination">
+  {# Prev #}
+  <a href="{{ url_for('main.index', page=pagination.prev_num) }}"
+     class="page-btn {% if not pagination.has_prev %}disabled{% endif %}">
+    ‹
+  </a>
+
+  {# Pages with ellipsis #}
+  {% set cur = pagination.page %}
+  {% set total = pagination.pages %}
+  {% for p in pagination.iter_pages(left_edge=1, left_current=2, right_current=2, right_edge=1) %}
+    {% if p %}
+      <a href="{{ url_for('main.index', page=p) }}"
+         class="page-btn {% if p == cur %}active{% endif %}">{{ p }}</a>
+    {% else %}
+      <span class="page-dots">…</span>
+    {% endif %}
+  {% endfor %}
+
+  {# Next #}
+  <a href="{{ url_for('main.index', page=pagination.next_num) }}"
+     class="page-btn {% if not pagination.has_next %}disabled{% endif %}">
+    ›
+  </a>
+</div>
+{% endif %}
+
+{% endblock %}

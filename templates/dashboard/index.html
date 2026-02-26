@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<section class="section-pad">
+  <div class="reveal">
+    <div class="section-eyebrow" data-ka="პირადი კაბინეტი" data-en="Dashboard">პირადი კაბინეტი</div>
+    <h1 class="section-title">
+      <span data-ka="გამარჯობა," data-en="Hello,">გამარჯობა,</span>
+      {{ user.username }}! 👋
+    </h1>
+  </div>
+
+  <div class="dash-grid reveal">
+    {# ── Left: profile card ── #}
+    <div>
+      <div class="profile-card">
+        <div class="profile-avatar">{{ user.username[:2].upper() }}</div>
+        <div class="profile-name">{{ user.username }}</div>
+        <div class="profile-handle">Lv. {{ user.level }}</div>
+
+        <div class="xp-bar-wrap" style="margin-top:1rem">
+          <div class="xp-bar-fill" style="width:{{ user.xp_progress_pct() }}%"></div>
+        </div>
+        <div class="xp-info">
+          <span>{{ "{:,}".format(user.xp) }} XP</span>
+          <span>{{ user.xp_to_next_level() }} <span data-ka="შემდეგ დონემდე" data-en="to next level">შემდეგ დონემდე</span></span>
+        </div>
+
+        <div class="dash-stats">
+          <div class="dstat"><div class="dstat-val">🔥{{ user.streak }}</div><div class="dstat-key">Streak</div></div>
+          <div class="dstat"><div class="dstat-val">{{ user.solved_count() }}</div><div class="dstat-key" data-ka="ამოხსნილი" data-en="Solved">ამოხსნილი</div></div>
+          <div class="dstat"><div class="dstat-val">{{ user.olympiad_registrations.count() }}</div><div class="dstat-key" data-ka="ოლიმპიადა" data-en="Olympiads">ოლიმპიადა</div></div>
+          <div class="dstat"><div class="dstat-val">{{ user.badges.count() }}</div><div class="dstat-key" data-ka="ბეჯი" data-en="Badges">ბეჯი</div></div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Right: activity + badges ── #}
+    <div class="dash-right">
+      <div class="profile-card">
+        <div class="dash-section-title" data-ka="ბოლო აქტივობა" data-en="Recent Activity">ბოლო აქტივობა</div>
+        <div class="task-list">
+          {% for sub in recent %}
+          <div class="task-card">
+            <div class="task-badge {{ sub.task.difficulty }}"></div>
+            <div class="task-name">{{ sub.task.title }}</div>
+            <div class="task-xp">+{{ sub.task.xp }} XP</div>
+          </div>
+          {% else %}
+          <p style="color:var(--muted);font-size:.9rem" data-ka="ჯერ ამოხსნილი ტასკი არ არის." data-en="No solved tasks yet.">ჯერ ამოხსნილი ტასკი არ არის.</p>
+          {% endfor %}
+        </div>
+        <a href="{{ url_for('tasks.index') }}" class="btn-primary" style="display:inline-block;margin-top:1rem;padding:10px 24px;text-decoration:none;font-size:.9rem"
+           data-ka="ახალი ტასკი" data-en="New Task">ახალი ტასკი</a>
+      </div>
+
+      <div class="profile-card">
+        <div class="dash-section-title" data-ka="ჩემი ბეჯები" data-en="My Badges">ჩემი ბეჯები</div>
+        {% if badges %}
+        <div class="badges-grid">
+          {% for badge in badges %}
+          <div class="badge-card">
+            <span class="badge-emoji">{{ badge.emoji }}</span>
+            <div class="badge-name">{{ badge.name_ka if session.get('lang','ka')=='ka' else badge.name_en }}</div>
+            <div class="badge-desc">{{ badge.description_ka if session.get('lang','ka')=='ka' else badge.description_en }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p style="color:var(--muted);font-size:.9rem" data-ka="ბეჯები ჯერ არ გაქვს. ამოხსენი ტასკები!" data-en="No badges yet. Solve tasks!">
+          ბეჯები ჯერ არ გაქვს. ამოხსენი ტასკები! 🎯
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

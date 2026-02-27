@@ -34,6 +34,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; font-size: 16px; }
 body {
+  display: flex; flex-direction: column;
   font-family: 'Outfit', sans-serif;
   background: var(--bg);
   color: var(--text);
@@ -120,7 +121,7 @@ body:hover #cursor { box-shadow: 0 0 18px var(--orange); }
 .xp-icon { font-size: 1.4rem; }
 
 /* ── SECTION LAYOUT ──────────────────────────── */
-main#main-content { position: relative; z-index: 1; }
+main#main-content { position: relative; z-index: 1; flex: 1; }
 .section-pad { padding: 6rem clamp(1rem, 5vw, 4rem); }
 
 /* ── SCROLL REVEAL ───────────────────────────── */
@@ -151,7 +152,7 @@ footer {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 2rem; align-items: center;
-  margin-top: 4rem;
+  margin-top: auto;
 }
 .footer-copy { color: var(--muted); font-size: .85rem; }
 .footer-links { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }

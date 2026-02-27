@@ -1,15 +1,16 @@
 {% extends "base.html" %}
-{% block title %}რეიტინგი{% endblock %}
+{% block title %}{{ t("რეიტინგი", "Ratings") }}{% endblock %}
+
 {% block content %}
 <section class="section-pad">
   <div class="reveal">
-    <div class="section-eyebrow" data-ka="ლიდერბორდი" data-en="Leaderboard">ლიდერბორდი</div>
-    <h1 class="section-title" data-ka="რეიტინგი" data-en="Ratings">რეიტინგი</h1>
+    <div class="section-eyebrow">{{ t("ლიდერბორდი", "Leaderboard") }}</div>
+    <h1 class="section-title">{{ t("რეიტინგი", "Ratings") }}</h1>
   </div>
   <div class="leaderboard reveal">
     <div class="lb-header">
-      <span data-ka="#" data-en="#">#</span>
-      <span data-ka="მომხმარებელი" data-en="User">მომხმარებელი</span>
+      <span>#</span>
+      <span>{{ t("მომხმარებელი", "User") }}</span>
       <span>XP</span>
     </div>
     {% for user in users %}
@@ -27,14 +28,14 @@
       </div>
       <div class="lb-badges">
         {% for badge in user.badges.limit(4).all() %}
-          <span title="{{ badge.name_ka }}">{{ badge.emoji }}</span>
+          <span title="{{ badge.name_ka if lang == 'ka' else badge.name_en }}">{{ badge.emoji }}</span>
         {% endfor %}
       </div>
       <div class="lb-xp">{{ "{:,}".format(user.xp) }} XP</div>
     </div>
     {% else %}
     <div style="padding:2rem;text-align:center;color:var(--muted)">
-      <span data-ka="ჯერ არ არის მომხმარებლები." data-en="No users yet.">ჯერ არ არის მომხმარებლები.</span>
+      {{ t("ჯერ არ არის მომხმარებლები.", "No users yet.") }}
     </div>
     {% endfor %}
   </div>

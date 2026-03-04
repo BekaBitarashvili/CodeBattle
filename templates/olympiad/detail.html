@@ -1,0 +1,439 @@
+{% extends "base.html" %}
+{% block title %}{{ olympiad.title_ka if lang == 'ka' else olympiad.title_en }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── OLYMPIAD DETAIL ─────────────────────────── */
+.od-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: calc(var(--nav-h, 70px) + 3rem) clamp(1rem,5vw,2rem) 6rem;
+}
+
+/* back */
+.od-back {
+  display: inline-flex; align-items: center; gap: .5rem;
+  color: var(--muted); text-decoration: none;
+  font-size: .88rem; font-weight: 600;
+  margin-bottom: 2.5rem;
+  transition: color .2s, gap .2s;
+}
+.od-back:hover { color: var(--orange); gap: .8rem; }
+
+/* ── HERO CARD ───────────────────────────────── */
+.od-hero-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 26px;
+  padding: 3rem 3.5rem;
+  position: relative; overflow: hidden;
+  margin-bottom: 1.6rem;
+  backdrop-filter: blur(14px);
+}
+.od-hero-card::before {
+  content: '';
+  position: absolute; top: -100px; right: -80px;
+  width: 340px; height: 340px;
+  background: radial-gradient(circle, var(--orange)16, transparent 70%);
+  pointer-events: none;
+}
+.od-hero-bg-trophy {
+  position: absolute; right: 3rem; top: 50%;
+  transform: translateY(-50%);
+  font-size: 8rem; opacity: .08;
+  user-select: none; pointer-events: none;
+}
+
+/* status */
+.od-status {
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-size: .72rem; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; border-radius: 8px;
+  padding: 5px 13px; margin-bottom: 1.2rem;
+}
+.od-status.live     { background:#f4433620; border:1px solid #f4433650; color:#f44336; }
+.od-status.upcoming { background:var(--orange)18; border:1px solid var(--orange)38; color:var(--orange); }
+.od-status.ended    { background:#ffffff10; border:1px solid #ffffff20; color:var(--muted); }
+.od-live-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #f44336;
+  animation: pulse-dot .8s alternate infinite;
+}
+@keyframes pulse-dot { to { opacity:.35; } }
+
+.od-title {
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 900; line-height: 1.15;
+  margin-bottom: 1.4rem;
+  position: relative; z-index: 1;
+}
+
+/* date row */
+.od-dates {
+  display: flex; gap: 2.5rem; flex-wrap: wrap;
+  margin-bottom: 1.6rem;
+  position: relative; z-index: 1;
+}
+.od-date-block {}
+.od-date-label {
+  font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: .25rem;
+}
+.od-date-val {
+  font-size: 1rem; font-weight: 700;
+  font-family: 'Space Mono', monospace;
+}
+
+/* prizes */
+.od-prizes-row {
+  display: flex; gap: .5rem; flex-wrap: wrap;
+  position: relative; z-index: 1;
+}
+.od-prize-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .8rem; font-weight: 700;
+  background: var(--orange)18; border: 1px solid var(--orange)35;
+  border-radius: 8px; padding: 5px 14px; color: var(--orange);
+}
+
+/* ── STATS ROW ───────────────────────────────── */
+.od-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem; margin-bottom: 1.6rem;
+}
+.od-stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.4rem 1.6rem;
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+.od-stat-icon { font-size: 1.6rem; margin-bottom: .4rem; }
+.od-stat-val {
+  font-size: 1.5rem; font-weight: 900;
+  color: var(--orange); font-family: 'Space Mono', monospace;
+  line-height: 1;
+}
+.od-stat-label {
+  font-size: .75rem; color: var(--muted); margin-top: .3rem;
+}
+
+/* ── INFO CARD ───────────────────────────────── */
+.od-info-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.2rem 2.6rem;
+  margin-bottom: 1.6rem;
+  backdrop-filter: blur(12px);
+}
+.od-info-title {
+  font-size: 1rem; font-weight: 800;
+  margin-bottom: 1.2rem;
+  display: flex; align-items: center; gap: .6rem;
+}
+.od-rules {
+  display: flex; flex-direction: column; gap: .75rem;
+}
+.od-rule {
+  display: flex; align-items: flex-start; gap: .8rem;
+  font-size: .93rem; color: var(--muted); line-height: 1.6;
+}
+.od-rule-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--orange); flex-shrink: 0;
+  margin-top: .45rem; opacity: .7;
+}
+
+/* ── REGISTER CARD ───────────────────────────── */
+.od-reg-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.2rem 2.6rem;
+  backdrop-filter: blur(12px);
+  position: relative; overflow: hidden;
+  text-align: center;
+}
+.od-reg-card::before {
+  content: '';
+  position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
+  width: 280px; height: 280px;
+  background: radial-gradient(circle, var(--orange)12, transparent 70%);
+  pointer-events: none;
+}
+.od-reg-title {
+  font-size: 1.3rem; font-weight: 900;
+  margin-bottom: .5rem; position: relative;
+}
+.od-reg-sub {
+  color: var(--muted); font-size: .9rem;
+  margin-bottom: 1.8rem; position: relative;
+  max-width: 440px; margin-left: auto; margin-right: auto; line-height: 1.6;
+}
+.od-reg-btn {
+  display: inline-flex; align-items: center; gap: .6rem;
+  padding: 15px 40px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--orange), var(--orange2, #ff8c42));
+  color: #fff; border: none;
+  font-size: 1.05rem; font-weight: 800; cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  transition: transform .25s, box-shadow .25s;
+  position: relative;
+}
+.od-reg-btn:hover { transform: translateY(-3px); box-shadow: 0 12px 36px #ff572255; }
+.od-reg-btn:disabled {
+  background: var(--bg3); color: var(--muted);
+  border: 1px solid var(--border);
+  cursor: not-allowed; transform: none; box-shadow: none;
+}
+.od-reg-success {
+  display: none;
+  flex-direction: column; align-items: center; gap: .5rem;
+  color: #22c55e; font-weight: 700; font-size: 1rem; position: relative;
+}
+.od-reg-success-icon { font-size: 2.5rem; }
+
+/* login nudge */
+.od-login-nudge {
+  display: flex; align-items: center; justify-content: center;
+  gap: 1rem; flex-wrap: wrap;
+  position: relative;
+}
+.od-login-nudge p {
+  color: var(--muted); font-size: .95rem; margin: 0;
+}
+
+/* ended notice */
+.od-ended-notice {
+  display: inline-flex; align-items: center; gap: .6rem;
+  background: #ffffff10; border: 1px solid #ffffff20;
+  border-radius: 12px; padding: 12px 20px;
+  color: var(--muted); font-size: .9rem;
+  position: relative;
+}
+
+@media (max-width: 640px) {
+  .od-hero-card { padding: 2rem 1.6rem; }
+  .od-info-card, .od-reg-card { padding: 1.8rem 1.6rem; }
+  .od-stats { grid-template-columns: 1fr; }
+  .od-hero-bg-trophy { display: none; }
+  .od-dates { gap: 1.5rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set now = now_dt %}
+{% set title = olympiad.title_ka if lang == 'ka' else olympiad.title_en %}
+
+<div class="od-wrap">
+
+  {# ── BACK ── #}
+  <a href="{{ url_for('olympiad.index') }}" class="od-back reveal">
+    ← {{ t("ოლიმპიადებზე დაბრუნება", "Back to olympiads") }}
+  </a>
+
+  {# ── HERO CARD ── #}
+  <div class="od-hero-card reveal">
+    <div class="od-hero-bg-trophy">🏆</div>
+
+    {# Status badge #}
+    {% if olympiad.is_ongoing %}
+      <div class="od-status live"><span class="od-live-dot"></span> LIVE — {{ t("მიმდინარეობს","Ongoing") }}</div>
+    {% elif olympiad.start_date > now_dt %}
+      <div class="od-status upcoming">🔜 {{ t("მალე იწყება","Starting Soon") }}</div>
+    {% else %}
+      <div class="od-status ended">✅ {{ t("დასრულდა","Ended") }}</div>
+    {% endif %}
+
+    <h1 class="od-title">{{ title }}</h1>
+
+    <div class="od-dates">
+      <div class="od-date-block">
+        <div class="od-date-label">{{ t("დაწყება","Start") }}</div>
+        <div class="od-date-val">{{ olympiad.start_date.strftime('%d %B %Y · %H:%M') }}</div>
+      </div>
+      <div class="od-date-block">
+        <div class="od-date-label">{{ t("დასასრული","End") }}</div>
+        <div class="od-date-val">{{ olympiad.end_date.strftime('%d %B %Y · %H:%M') }}</div>
+      </div>
+    </div>
+
+    {% if olympiad.prize_info %}
+    <div class="od-prizes-row">
+      {% for prize in olympiad.prize_info.split('·') %}
+        <span class="od-prize-chip">🏅 {{ prize.strip() }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── STATS ── #}
+  <div class="od-stats reveal">
+    <div class="od-stat-card">
+      <div class="od-stat-icon">👥</div>
+      <div class="od-stat-val">{{ olympiad.participant_count }}</div>
+      <div class="od-stat-label">{{ t("მონაწილე","Participants") }}</div>
+    </div>
+    <div class="od-stat-card">
+      <div class="od-stat-icon">⏱</div>
+      <div class="od-stat-val">
+        {% set duration = (olympiad.end_date - olympiad.start_date).days %}
+        {{ duration }}
+      </div>
+      <div class="od-stat-label">{{ t("დღე","Days") }}</div>
+    </div>
+    <div class="od-stat-card">
+      <div class="od-stat-icon">🎖</div>
+      <div class="od-stat-val">
+        {% if olympiad.prize_info %}{{ olympiad.prize_info.split('·') | length }}{% else %}—{% endif %}
+      </div>
+      <div class="od-stat-label">{{ t("ჯილდო","Prizes") }}</div>
+    </div>
+  </div>
+
+  {# ── RULES ── #}
+  <div class="od-info-card reveal">
+    <div class="od-info-title">📋 {{ t("წესები და პირობები","Rules & Conditions") }}</div>
+    <div class="od-rules">
+      {% set rules_ka = [
+        "ოლიმპიადაში მონაწილეობა უფასოა ყველა რეგისტრირებული მომხმარებლისთვის.",
+        "გადაწყვეტილებები წარდგენილი უნდა იყოს ოლიმპიადის დასრულებამდე.",
+        "ქულა გამოითვლება სისწრაფისა და სისწორის კომბინაციით.",
+        "გარე რესურსების გამოყენება ნებადართულია, AI-ის — არა.",
+        "გამარჯვებული 5 სამუშაო დღეში დაუკავშირდება CodeMama გუნდი.",
+      ] %}
+      {% set rules_en = [
+        "Participation is free for all registered users.",
+        "Solutions must be submitted before the olympiad ends.",
+        "Score is calculated by a combination of speed and accuracy.",
+        "External resources are allowed, AI tools are not.",
+        "The winner will be contacted by the CodeMama team within 5 business days.",
+      ] %}
+      {% set rules = rules_ka if lang == 'ka' else rules_en %}
+      {% for rule in rules %}
+      <div class="od-rule">
+        <span class="od-rule-dot"></span>
+        <span>{{ rule }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ── REGISTRATION CARD ── #}
+  <div class="od-reg-card reveal">
+
+    {% if olympiad.is_ongoing %}
+      {# ── LIVE: show register ── #}
+      <div class="od-reg-title">{{ t("მზად ხარ?","Ready to compete?") }}</div>
+      <p class="od-reg-sub">
+        {{ t(
+          "ოლიმპიადა ახლა მიმდინარეობს! დარეგისტრირდი და გამოამჟღავნე შენი ნიჭი.",
+          "The olympiad is live right now! Register and show your skills."
+        ) }}
+      </p>
+
+      {% if current_user.is_authenticated %}
+        {# Logged in — show register button #}
+        {% if registered %}
+          <div class="od-reg-success" style="display:flex">
+            <span class="od-reg-success-icon">✅</span>
+            <span>{{ t("დარეგისტრირებული ხარ!","You are registered!") }}</span>
+            <span style="font-size:.85rem;color:var(--muted);font-weight:400">
+              {{ t("წარმატებები ოლიმპიადაში 🏆","Good luck in the olympiad 🏆") }}
+            </span>
+          </div>
+        {% else %}
+          <div id="regArea">
+            <button class="od-reg-btn" id="regBtn" onclick="registerOlympiad({{ olympiad.id }})">
+              🏆 {{ t("დარეგისტრირება","Register Now") }}
+            </button>
+            <div id="regMsg" style="margin-top:1rem;font-size:.9rem;display:none"></div>
+          </div>
+          <div class="od-reg-success" id="regSuccess">
+            <span class="od-reg-success-icon">🎉</span>
+            <span>{{ t("წარმატებით დარეგისტრირდი!","Successfully registered!") }}</span>
+            <span style="font-size:.85rem;color:var(--muted);font-weight:400">
+              {{ t("წარმატებები ოლიმპიადაში 🏆","Good luck in the olympiad 🏆") }}
+            </span>
+          </div>
+        {% endif %}
+
+      {% else %}
+        {# Not logged in — nudge to login #}
+        <div class="od-login-nudge">
+          <p>{{ t("რეგისტრაციისთვის შესვლა საჭიროა.","You need to be logged in to register.") }}</p>
+          <button class="od-reg-btn" onclick="openModal('login')">
+            👤 {{ t("შესვლა / რეგისტრაცია","Login / Sign up") }}
+          </button>
+        </div>
+      {% endif %}
+
+    {% elif olympiad.start_date > now_dt %}
+      {# ── UPCOMING ── #}
+      <div class="od-reg-title">{{ t("ოლიმპიადა მალე იწყება","Olympiad starts soon") }}</div>
+      <p class="od-reg-sub">
+        {{ t(
+          "რეგისტრაცია გაიხსნება ოლიმპიადის დაწყებისთანავე.",
+          "Registration opens when the olympiad starts."
+        ) }}
+      </p>
+      <div class="od-ended-notice">
+        ⏳ {{ t("იწყება","Starts") }}: {{ olympiad.start_date.strftime('%d %B %Y · %H:%M') }}
+      </div>
+
+    {% else %}
+      {# ── ENDED ── #}
+      <div class="od-reg-title">{{ t("ოლიმპიადა დასრულდა","Olympiad has ended") }}</div>
+      <p class="od-reg-sub">
+        {{ t(
+          "ეს ოლიმპიადა უკვე დასრულდა. გადახედე სხვა მიმდინარე ოლიმპიადებს.",
+          "This olympiad has already ended. Check out other ongoing olympiads."
+        ) }}
+      </p>
+      <a href="{{ url_for('olympiad.index') }}" class="od-reg-btn" style="text-decoration:none">
+        {{ t("სხვა ოლიმპიადები","Other Olympiads") }} →
+      </a>
+    {% endif %}
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function registerOlympiad(id) {
+  const btn = document.getElementById('regBtn');
+  const msg = document.getElementById('regMsg');
+  const success = document.getElementById('regSuccess');
+  btn.disabled = true;
+  btn.textContent = '{{ t("ეთვლება...","Processing...") }}';
+  try {
+    const r = await fetch(`/olympiad/${id}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await r.json();
+    if (data.ok) {
+      document.getElementById('regArea').style.display = 'none';
+      success.style.display = 'flex';
+    } else {
+      msg.style.display = 'block';
+      msg.style.color = '#f44336';
+      msg.textContent = data.error || '{{ t("შეცდომა","Error") }}';
+      btn.disabled = false;
+      btn.textContent = '🏆 {{ t("დარეგისტრირება","Register Now") }}';
+    }
+  } catch {
+    msg.style.display = 'block';
+    msg.style.color = '#f44336';
+    msg.textContent = '{{ t("კავშირის შეცდომა","Connection error") }}';
+    btn.disabled = false;
+    btn.textContent = '🏆 {{ t("დარეგისტრირება","Register Now") }}';
+  }
+}
+</script>
+{% endblock %}

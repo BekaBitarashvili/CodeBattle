@@ -16,6 +16,7 @@ class News(db.Model):
     category_ka  = db.Column(db.String(64),  default="სიახლე")
     category_en  = db.Column(db.String(64),  default="News")
     emoji        = db.Column(db.String(8),   default="📢")
+    image_url    = db.Column(db.String(512),  nullable=True)
     created_at   = db.Column(db.DateTime,    default=datetime.utcnow)
     is_published = db.Column(db.Boolean,     default=True)
 

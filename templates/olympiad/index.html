@@ -1,39 +1,264 @@
 {% extends "base.html" %}
-{% block title %}ოლიმპიადა{% endblock %}
-{% block content %}
-<section class="section-pad">
-  <div class="reveal">
-    <div class="section-eyebrow" data-ka="შეჯიბრება" data-en="Competition">შეჯიბრება</div>
-    <h1 class="section-title" data-ka="ოლიმპიადა" data-en="Olympiad">ოლიმპიადა</h1>
-  </div>
+{% block title %}{{ t("ოლიმპიადა", "Olympiad") }}{% endblock %}
 
+{% block extra_css %}
+<style>
+/* ── OLYMPIAD LIST PAGE ──────────────────────── */
+.olympiad-hero {
+  padding: 7rem clamp(1rem,5vw,4rem) 2rem;
+  text-align: center;
+}
+.olympiad-hero-eyebrow {
+  font-size: .78rem; font-weight: 700; letter-spacing: .14em;
+  color: var(--orange); text-transform: uppercase; margin-bottom: .8rem;
+}
+.olympiad-hero-title {
+  font-size: clamp(2rem,5vw,3.4rem);
+  font-weight: 900; margin-bottom: 1rem; line-height: 1.1;
+}
+.olympiad-hero-sub {
+  color: var(--muted); font-size: 1rem;
+  max-width: 500px; margin: 0 auto; line-height: 1.7;
+}
+
+/* ── OLYMPIAD GRID ───────────────────────────── */
+.olympiad-grid {
+  max-width: 900px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 1.8rem;
+  padding: 2rem clamp(1rem,5vw,4rem) 3rem;
+}
+
+/* ── OLYMPIAD CARD ───────────────────────────── */
+.ol-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 2.2rem 2.6rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: center;
+  position: relative; overflow: hidden;
+  transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+  backdrop-filter: blur(12px);
+  text-decoration: none; color: var(--text);
+}
+.ol-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 4px; height: 100%;
+  background: linear-gradient(180deg, var(--orange), var(--orange2));
+  transform: scaleY(0); transform-origin: top;
+  transition: transform .3s ease;
+  border-radius: 4px 0 0 4px;
+}
+.ol-card::after {
+  content: '';
+  position: absolute; top: -80px; right: -60px;
+  width: 220px; height: 220px;
+  background: radial-gradient(circle, var(--orange)14, transparent 70%);
+  pointer-events: none; transition: opacity .3s;
+  opacity: 0;
+}
+.ol-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 52px #00000055, 0 0 0 1px var(--orange)22;
+  border-color: var(--orange)33;
+}
+.ol-card:hover::before { transform: scaleY(1); }
+.ol-card:hover::after  { opacity: 1; }
+
+/* status badge */
+.ol-status {
+  display: inline-flex; align-items: center; gap: .4rem;
+  font-size: .7rem; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; border-radius: 7px;
+  padding: 4px 11px; margin-bottom: .9rem; width: fit-content;
+}
+.ol-status.live    { background:#f4433620; border:1px solid #f4433650; color:#f44336; }
+.ol-status.upcoming{ background:var(--orange)18; border:1px solid var(--orange)38; color:var(--orange); }
+.ol-status.ended   { background:#ffffff10; border:1px solid #ffffff20; color:var(--muted); }
+
+.ol-live-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: #f44336;
+  animation: pulse-dot .8s alternate infinite;
+}
+@keyframes pulse-dot { to { opacity: .4; } }
+
+.ol-title {
+  font-size: 1.25rem; font-weight: 800;
+  line-height: 1.3; margin-bottom: .6rem;
+  transition: color .2s;
+}
+.ol-card:hover .ol-title { color: var(--orange); }
+
+.ol-meta {
+  display: flex; align-items: center; gap: .7rem;
+  color: var(--muted); font-size: .82rem;
+  font-family: 'Space Mono', monospace; margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.ol-meta-sep { opacity: .4; }
+
+.ol-prizes {
+  display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.4rem;
+}
+.ol-prize-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .75rem; font-weight: 700;
+  background: var(--orange)15; border: 1px solid var(--orange)30;
+  border-radius: 7px; padding: 4px 12px; color: var(--orange);
+}
+
+.ol-btn {
+  display: inline-flex; align-items: center; gap: .5rem;
+  padding: 11px 26px; border-radius: 11px;
+  background: var(--orange); color: #fff; border: none;
+  font-size: .9rem; font-weight: 700; cursor: pointer;
+  text-decoration: none;
+  transition: transform .2s, box-shadow .2s;
+  width: fit-content;
+}
+.ol-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px #ff572244; }
+
+/* trophy emoji */
+.ol-trophy {
+  font-size: 5rem; opacity: .22;
+  transition: opacity .3s, transform .3s;
+  user-select: none; position: relative; z-index: 1;
+}
+.ol-card:hover .ol-trophy { opacity: .5; transform: scale(1.12) rotate(6deg); }
+
+/* ── PAGINATION ──────────────────────────────── */
+.pagination {
+  display: flex; align-items: center; justify-content: center;
+  gap: .5rem; padding: 1rem clamp(1rem,5vw,4rem) 5rem;
+  flex-wrap: wrap;
+}
+.page-btn {
+  min-width: 42px; height: 42px; border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card); color: var(--muted);
+  font-size: .9rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none; transition: all .2s;
+  font-family: 'Space Mono', monospace; padding: 0 .8rem;
+}
+.page-btn:hover { border-color: var(--orange); color: var(--orange); }
+.page-btn.active { background: var(--orange); border-color: var(--orange); color: #fff; box-shadow: 0 6px 18px #ff572244; }
+.page-btn.disabled { opacity: .35; pointer-events: none; }
+.page-dots { color: var(--muted); padding: 0 .3rem; line-height: 42px; }
+
+/* ── EMPTY ───────────────────────────────────── */
+.ol-empty {
+  text-align: center; padding: 6rem 2rem; color: var(--muted);
+}
+.ol-empty-icon { font-size: 4rem; margin-bottom: 1rem; }
+
+@media (max-width: 640px) {
+  .ol-card { grid-template-columns: 1fr; padding: 1.6rem; }
+  .ol-trophy { display: none; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── HERO ── #}
+<div class="olympiad-hero reveal">
+  <div class="olympiad-hero-eyebrow">{{ t("შეჯიბრება", "Competition") }}</div>
+  <h1 class="olympiad-hero-title">
+    {{ t("კოდინგის", "Coding") }}<br/>
+    <span class="accent">{{ t("ოლიმპიადები", "Olympiads") }}</span>
+  </h1>
+  <p class="olympiad-hero-sub">
+    {{ t(
+      "ყოველთვიური კოდინგის შეჯიბრებები ლამაზი ჯილდოებით. გამოამჟღავნე შენი ნიჭი!",
+      "Monthly coding competitions with great prizes. Show off your talent!"
+    ) }}
+  </p>
+</div>
+
+{# ── OLYMPIAD CARDS ── #}
+<div class="olympiad-grid">
   {% if olympiads %}
     {% for o in olympiads %}
-    <div class="olympiad-card reveal">
+
+    {% if o.is_ongoing %}
+      {% set status_class = "live" %}
+      {% set status_label = t("🔴 LIVE — მიმდინარეობს", "🔴 LIVE — Ongoing") %}
+    {% elif o.start_date > now %}
+      {% set status_class = "upcoming" %}
+      {% set status_label = t("🔜 მალე", "🔜 Upcoming") %}
+    {% else %}
+      {% set status_class = "ended" %}
+      {% set status_label = t("✅ დასრულდა", "✅ Ended") %}
+    {% endif %}
+
+    <a href="{{ url_for('olympiad.detail', olympiad_id=o.id) }}"
+       class="ol-card reveal" style="transition-delay: {{ loop.index0 * 0.08 }}s">
+
       <div>
-        <div class="olympiad-title">{{ o.title_ka if session.get('lang','ka')=='ka' else o.title_en }}</div>
-        <div class="olympiad-meta">
-          {{ o.start_date.strftime('%d %B') }} — {{ o.end_date.strftime('%d %B %Y') }}
-          {% if o.is_ongoing %}<span class="live-chip">🔴 LIVE</span>{% endif %}
+        <div class="ol-status {{ status_class }}">
+          {% if o.is_ongoing %}<span class="ol-live-dot"></span>{% endif %}
+          {{ status_label }}
         </div>
+
+        <div class="ol-title">
+          {{ o.title_ka if lang == 'ka' else o.title_en }}
+        </div>
+
+        <div class="ol-meta">
+          <span>📅 {{ o.start_date.strftime('%d %b %Y') }}</span>
+          <span class="ol-meta-sep">—</span>
+          <span>{{ o.end_date.strftime('%d %b %Y') }}</span>
+          <span class="ol-meta-sep">·</span>
+          <span>👥 {{ o.participant_count }} {{ t("მონაწილე", "participants") }}</span>
+        </div>
+
         {% if o.prize_info %}
-          <div class="prize-chip" style="margin-bottom:1.2rem">🏆 {{ o.prize_info }}</div>
-        {% endif %}
-        <div style="display:flex;gap:.8rem">
-          <a href="{{ url_for('olympiad.detail', olympiad_id=o.id) }}" class="btn-primary" style="padding:12px 28px;font-size:.95rem;text-decoration:none">
-            <span data-ka="დეტალები" data-en="Details">დეტალები</span>
-          </a>
+        <div class="ol-prizes">
+          {% for prize in o.prize_info.split('·') %}
+            <span class="ol-prize-chip">🏅 {{ prize.strip() }}</span>
+          {% endfor %}
         </div>
+        {% endif %}
+
+        <span class="ol-btn">
+          {{ t("დეტალები", "Details") }} →
+        </span>
       </div>
-      <div class="olympiad-img">🏆</div>
-    </div>
+
+      <div class="ol-trophy">🏆</div>
+    </a>
+
     {% endfor %}
   {% else %}
-    <div class="olympiad-card reveal" style="justify-content:center;text-align:center">
-      <p style="color:var(--muted)" data-ka="მალე იქნება ახალი ოლიმპიადა!" data-en="New olympiad coming soon!">
-        მალე იქნება ახალი ოლიმპიადა! 🚀
-      </p>
+    <div class="ol-empty reveal">
+      <div class="ol-empty-icon">🚀</div>
+      <p>{{ t("მალე იქნება ახალი ოლიმპიადა!", "New olympiad coming soon!") }}</p>
     </div>
   {% endif %}
-</section>
+</div>
+
+{# ── PAGINATION ── #}
+{% if pagination and pagination.pages > 1 %}
+<div class="pagination">
+  <a href="{{ url_for('olympiad.index', page=pagination.prev_num) }}"
+     class="page-btn {% if not pagination.has_prev %}disabled{% endif %}">‹</a>
+
+  {% for p in pagination.iter_pages(left_edge=1, left_current=2, right_current=2, right_edge=1) %}
+    {% if p %}
+      <a href="{{ url_for('olympiad.index', page=p) }}"
+         class="page-btn {% if p == pagination.page %}active{% endif %}">{{ p }}</a>
+    {% else %}
+      <span class="page-dots">…</span>
+    {% endif %}
+  {% endfor %}
+
+  <a href="{{ url_for('olympiad.index', page=pagination.next_num) }}"
+     class="page-btn {% if not pagination.has_next %}disabled{% endif %}">›</a>
+</div>
+{% endif %}
+
 {% endblock %}

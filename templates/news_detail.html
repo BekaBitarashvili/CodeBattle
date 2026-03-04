@@ -1,208 +1,242 @@
 {% extends "base.html" %}
-{% block title %}{{ item.title_ka if lang == 'ka' else item.title_en }}{% endblock %}
+{% block title %}{{ t("მთავარი", "Home") }}{% endblock %}
 
 {% block extra_css %}
 <style>
-/* ── NEWS DETAIL PAGE ───────────────────────── */
-.nd-wrap {
-  max-width: 780px;
-  margin: 0 auto;
-  padding: calc(var(--nav-h) + 3rem) clamp(1rem,5vw,2rem) 6rem;
+/* ── NEWS PAGE ─────────────────────────────── */
+.news-hero {
+  padding: 7rem clamp(1rem,5vw,4rem) 2rem;
+  text-align: center;
+  position: relative;
+}
+.news-hero-eyebrow {
+  font-size: .78rem; font-weight: 700; letter-spacing: .14em;
+  color: var(--orange); text-transform: uppercase; margin-bottom: .8rem;
+}
+.news-hero-title {
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  font-weight: 900; line-height: 1.1; margin-bottom: 1rem;
+}
+.news-hero-sub {
+  color: var(--muted); font-size: 1rem; max-width: 520px; margin: 0 auto 3rem;
 }
 
-/* back link */
-.nd-back {
-  display: inline-flex; align-items: center; gap: .5rem;
-  color: var(--muted); text-decoration: none;
-  font-size: .88rem; font-weight: 600;
-  margin-bottom: 2.5rem;
-  transition: color .2s, gap .2s;
-}
-.nd-back:hover { color: var(--orange); gap: .8rem; }
-
-/* header card */
-.nd-header {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 2.8rem 3rem;
-  margin-bottom: 2rem;
-  position: relative; overflow: hidden;
-  backdrop-filter: blur(12px);
-}
-.nd-header::before {
-  content: '';
-  position: absolute; top: -80px; right: -60px;
-  width: 260px; height: 260px;
-  background: radial-gradient(circle, var(--orange)18, transparent 70%);
-  pointer-events: none;
+/* ── NEWS GRID ─────────────────────────────── */
+.news-grid {
+  max-width: 900px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 1.8rem;
+  padding: 0 clamp(1rem,5vw,4rem) 3rem;
 }
 
-.nd-emoji-row {
-  display: flex; align-items: center; gap: 1.2rem;
-  margin-bottom: 1.4rem;
-}
-.nd-emoji {
-  width: 68px; height: 68px; border-radius: 18px;
-  background: linear-gradient(135deg, var(--orange)22, var(--blue)18);
-  border: 1px solid var(--orange)28;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 2rem; flex-shrink: 0;
-}
-.nd-meta-group { display: flex; flex-direction: column; gap: .35rem; }
-.nd-category {
-  font-size: .72rem; font-weight: 800; letter-spacing: .12em;
-  text-transform: uppercase; color: var(--orange);
-  background: var(--orange)18; border: 1px solid var(--orange)30;
-  border-radius: 6px; padding: 3px 11px; display: inline-block;
-  width: fit-content;
-}
-.nd-date {
-  font-size: .78rem; color: var(--muted);
-  font-family: 'Space Mono', monospace;
-}
-
-.nd-title {
-  font-size: clamp(1.5rem, 3.5vw, 2.1rem);
-  font-weight: 900; line-height: 1.2;
-  position: relative; z-index: 1;
-}
-
-/* body */
-.nd-body {
+/* ── NEWS CARD ─────────────────────────────── */
+.news-card {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 2.5rem 3rem;
-  margin-bottom: 2rem;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+  text-decoration: none;
+  color: var(--text);
+  position: relative;
   backdrop-filter: blur(12px);
 }
-.nd-body-text {
-  font-size: 1.05rem;
-  line-height: 1.9;
-  color: var(--muted);
+.news-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 3px;
+  background: linear-gradient(90deg, var(--orange), var(--orange2, #ff8c42));
+  transform: scaleX(0); transform-origin: left;
+  transition: transform .3s ease;
 }
-.nd-body-text p { margin-bottom: 1.2rem; }
-.nd-body-text p:last-child { margin-bottom: 0; }
+.news-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 52px #00000055, 0 0 0 1px var(--orange)22;
+  border-color: var(--orange)33;
+}
+.news-card:hover::before { transform: scaleX(1); }
 
-/* divider */
-.nd-divider {
-  width: 48px; height: 3px;
-  background: linear-gradient(90deg, var(--orange), var(--orange2));
-  border-radius: 2px;
-  margin: 2rem 0;
+/* thumbnail */
+.news-thumb {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg3);
+}
+.news-thumb img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .45s ease;
+  filter: brightness(.85);
+}
+.news-card:hover .news-thumb img {
+  transform: scale(1.07);
+  filter: brightness(1);
+}
+/* fallback emoji if no image */
+.news-thumb-fallback {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3.5rem;
+  background: linear-gradient(135deg, var(--orange)18, var(--blue)12);
+}
+/* category overlay on image */
+.news-thumb-overlay {
+  position: absolute; top: .75rem; left: .75rem;
+  font-size: .68rem; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase;
+  background: var(--orange); color: #fff;
+  border-radius: 6px; padding: 3px 10px;
+  backdrop-filter: blur(4px);
 }
 
-/* prev / next nav */
-.nd-nav {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+/* card body */
+.news-body {
+  padding: 1.6rem 2rem;
+  display: flex; flex-direction: column; justify-content: center;
 }
-.nd-nav-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px; padding: 1.4rem 1.6rem;
-  text-decoration: none; color: var(--text);
-  transition: transform .25s, border-color .25s, box-shadow .25s;
-  display: flex; flex-direction: column; gap: .35rem;
-  min-width: 0;
+.news-date {
+  font-size: .75rem; color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  margin-bottom: .6rem;
 }
-.nd-nav-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--orange)44;
-  box-shadow: 0 14px 36px #0004;
+.news-title {
+  font-size: 1.12rem; font-weight: 700;
+  line-height: 1.4; margin-bottom: .6rem;
+  transition: color .2s;
 }
-.nd-nav-card.nd-next { text-align: right; align-items: flex-end; }
-.nd-nav-label {
-  font-size: .72rem; font-weight: 800; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--orange); opacity: .8;
-}
-.nd-nav-title {
-  font-size: .9rem; font-weight: 700; line-height: 1.35;
+.news-card:hover .news-title { color: var(--orange); }
+.news-excerpt {
+  color: var(--muted); font-size: .88rem; line-height: 1.65;
   display: -webkit-box; -webkit-line-clamp: 2;
   -webkit-box-orient: vertical; overflow: hidden;
+  margin-bottom: .9rem;
 }
-.nd-nav-empty {
-  /* placeholder so grid stays balanced when one side is missing */
+.news-read-more {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .82rem; font-weight: 700; color: var(--orange);
+  opacity: 0; transform: translateX(-6px);
+  transition: opacity .25s, transform .25s;
 }
+.news-card:hover .news-read-more { opacity: 1; transform: translateX(0); }
 
-@media (max-width: 640px) {
-  .nd-header, .nd-body { padding: 1.8rem 1.5rem; }
-  .nd-nav { grid-template-columns: 1fr; }
-  .nd-nav-card.nd-next { text-align: left; align-items: flex-start; }
+/* ── PAGINATION ─────────────────────────────── */
+.pagination {
+  display: flex; align-items: center; justify-content: center;
+  gap: .5rem; padding: 1rem clamp(1rem,5vw,4rem) 5rem;
+  flex-wrap: wrap;
+}
+.page-btn {
+  min-width: 42px; height: 42px; border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card); color: var(--muted);
+  font-size: .9rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none; transition: all .2s;
+  font-family: 'Space Mono', monospace; padding: 0 .8rem;
+}
+.page-btn:hover { border-color: var(--orange); color: var(--orange); }
+.page-btn.active {
+  background: var(--orange); border-color: var(--orange);
+  color: #fff; box-shadow: 0 6px 18px #ff572244;
+}
+.page-btn.disabled { opacity: .35; pointer-events: none; }
+.page-dots { color: var(--muted); padding: 0 .3rem; line-height: 42px; }
+
+/* ── EMPTY STATE ─────────────────────────────── */
+.empty-news { text-align: center; padding: 6rem 2rem; color: var(--muted); }
+.empty-news-icon { font-size: 4rem; margin-bottom: 1rem; }
+
+/* ── RESPONSIVE ─────────────────────────────── */
+@media (max-width: 700px) {
+  .news-card { grid-template-columns: 1fr; }
+  .news-thumb { height: 180px; }
+  .news-body { padding: 1.3rem 1.5rem; }
+}
+@media (max-width: 440px) {
+  .news-thumb { height: 150px; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="nd-wrap">
 
-  {# ── BACK ── #}
-  <a href="{{ url_for('main.index') }}" class="nd-back reveal">
-    ← {{ t("სიახლეებზე დაბრუნება", "Back to news") }}
-  </a>
+{# ── HERO ── #}
+<div class="news-hero reveal">
+  <div class="news-hero-eyebrow">{{ t("სიახლეები და განახლებები", "News & Updates") }}</div>
+  <h1 class="news-hero-title">
+    {{ t("რა ხდება", "What's happening") }}<br/>
+    <span class="accent">CodeMama</span>-{{ t("ზე?", "?") }}
+  </h1>
+  <p class="news-hero-sub">
+    {{ t("პლატფორმის უახლესი სიახლეები, განახლებები და გამოცხადებები.", "Latest platform news, updates and announcements.") }}
+  </p>
+</div>
 
-  {# ── HEADER CARD ── #}
-  <div class="nd-header reveal">
-    <div class="nd-emoji-row">
-      <div class="nd-emoji">{{ item.emoji }}</div>
-      <div class="nd-meta-group">
-        <span class="nd-category">
+{# ── NEWS CARDS ── #}
+<div class="news-grid">
+  {% if news %}
+    {% for item in news %}
+    <a href="{{ url_for('main.news_detail', news_id=item.id) }}"
+       class="news-card reveal" style="transition-delay: {{ loop.index0 * 0.05 }}s">
+
+      {# Thumbnail #}
+      <div class="news-thumb">
+        {% if item.image_url %}
+          <img src="{{ item.image_url }}" alt="{{ item.title_ka if lang == 'ka' else item.title_en }}" loading="lazy"/>
+        {% else %}
+          <div class="news-thumb-fallback">{{ item.emoji }}</div>
+        {% endif %}
+        <span class="news-thumb-overlay">
           {{ item.category_ka if lang == 'ka' else item.category_en }}
         </span>
-        <span class="nd-date">{{ item.created_at.strftime('%d %B %Y · %H:%M') }}</span>
       </div>
-    </div>
-    <h1 class="nd-title">
-      {{ item.title_ka if lang == 'ka' else item.title_en }}
-    </h1>
-  </div>
 
-  {# ── BODY ── #}
-  <div class="nd-body reveal">
-    <div class="nd-body-text">
-      {% set body = item.body_ka if lang == 'ka' else item.body_en %}
-      {# Split on double newlines to render paragraphs #}
-      {% for para in body.split('\n') %}
-        {% if para.strip() %}
-          <p>{{ para.strip() }}</p>
-        {% endif %}
-      {% endfor %}
-    </div>
-
-    <div class="nd-divider"></div>
-
-    <div style="display:flex; align-items:center; gap:.6rem; color:var(--muted); font-size:.82rem">
-      <span>🗓</span>
-      <span>{{ t("გამოქვეყნდა", "Published") }}: {{ item.created_at.strftime('%d %B %Y') }}</span>
-    </div>
-  </div>
-
-  {# ── PREV / NEXT ── #}
-  <div class="nd-nav reveal">
-    {% if prev_item %}
-    <a href="{{ url_for('main.news_detail', news_id=prev_item.id) }}" class="nd-nav-card nd-prev">
-      <span class="nd-nav-label">← {{ t("წინა სიახლე", "Previous") }}</span>
-      <span class="nd-nav-title">
-        {{ prev_item.title_ka if lang == 'ka' else prev_item.title_en }}
-      </span>
+      {# Body #}
+      <div class="news-body">
+        <div class="news-date">{{ item.created_at.strftime('%d %b %Y') }}</div>
+        <div class="news-title">
+          {{ item.title_ka if lang == 'ka' else item.title_en }}
+        </div>
+        <p class="news-excerpt">
+          {{ item.body_ka if lang == 'ka' else item.body_en }}
+        </p>
+        <span class="news-read-more">
+          {{ t("დაწვრილებით", "Read more") }} →
+        </span>
+      </div>
     </a>
-    {% else %}
-    <div class="nd-nav-empty"></div>
-    {% endif %}
-
-    {% if next_item %}
-    <a href="{{ url_for('main.news_detail', news_id=next_item.id) }}" class="nd-nav-card nd-next">
-      <span class="nd-nav-label">{{ t("შემდეგი სიახლე", "Next") }} →</span>
-      <span class="nd-nav-title">
-        {{ next_item.title_ka if lang == 'ka' else next_item.title_en }}
-      </span>
-    </a>
-    {% else %}
-    <div class="nd-nav-empty"></div>
-    {% endif %}
-  </div>
-
+    {% endfor %}
+  {% else %}
+    <div class="empty-news">
+      <div class="empty-news-icon">📭</div>
+      <p>{{ t("სიახლეები ჯერ არ არის.", "No news yet.") }}</p>
+    </div>
+  {% endif %}
 </div>
+
+{# ── PAGINATION ── #}
+{% if pagination and pagination.pages > 1 %}
+<div class="pagination">
+  <a href="{{ url_for('main.index', page=pagination.prev_num) }}"
+     class="page-btn {% if not pagination.has_prev %}disabled{% endif %}">‹</a>
+
+  {% set cur = pagination.page %}
+  {% set total = pagination.pages %}
+  {% for p in pagination.iter_pages(left_edge=1, left_current=2, right_current=2, right_edge=1) %}
+    {% if p %}
+      <a href="{{ url_for('main.index', page=p) }}"
+         class="page-btn {% if p == cur %}active{% endif %}">{{ p }}</a>
+    {% else %}
+      <span class="page-dots">…</span>
+    {% endif %}
+  {% endfor %}
+
+  <a href="{{ url_for('main.index', page=pagination.next_num) }}"
+     class="page-btn {% if not pagination.has_next %}disabled{% endif %}">›</a>
+</div>
+{% endif %}
+
 {% endblock %}

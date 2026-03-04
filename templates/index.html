@@ -33,79 +33,90 @@
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 2rem 2.4rem;
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 1.5rem;
-  align-items: start;
+  grid-template-columns: 220px 1fr;
+  overflow: hidden;
   cursor: pointer;
   transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
-  backdrop-filter: blur(12px);
   text-decoration: none;
   color: var(--text);
   position: relative;
-  overflow: hidden;
+  backdrop-filter: blur(12px);
 }
 .news-card::before {
   content: '';
   position: absolute; top: 0; left: 0;
-  width: 4px; height: 100%;
-  background: linear-gradient(180deg, var(--orange), var(--orange2));
-  transform: scaleY(0); transform-origin: top;
+  width: 100%; height: 3px;
+  background: linear-gradient(90deg, var(--orange), var(--orange2, #ff8c42));
+  transform: scaleX(0); transform-origin: left;
   transition: transform .3s ease;
-  border-radius: 4px 0 0 4px;
 }
 .news-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 20px 52px #00000055, 0 0 0 1px var(--orange)22;
   border-color: var(--orange)33;
 }
-.news-card:hover::before { transform: scaleY(1); }
+.news-card:hover::before { transform: scaleX(1); }
 
-.news-emoji {
-  width: 58px; height: 58px; border-radius: 16px;
-  background: linear-gradient(135deg, var(--orange)20, var(--blue)20);
-  border: 1px solid var(--orange)25;
+/* thumbnail */
+.news-thumb {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg3);
+}
+.news-thumb img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .45s ease;
+  filter: brightness(.85);
+}
+.news-card:hover .news-thumb img {
+  transform: scale(1.07);
+  filter: brightness(1);
+}
+/* fallback emoji if no image */
+.news-thumb-fallback {
+  width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.7rem; flex-shrink: 0;
-  transition: transform .3s;
+  font-size: 3.5rem;
+  background: linear-gradient(135deg, var(--orange)18, var(--blue)12);
 }
-.news-card:hover .news-emoji { transform: scale(1.12) rotate(-5deg); }
-
-.news-body {}
-
-.news-meta {
-  display: flex; align-items: center; gap: .8rem;
-  margin-bottom: .6rem; flex-wrap: wrap;
-}
-.news-category {
-  font-size: .7rem; font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--orange);
-  background: var(--orange)18; border: 1px solid var(--orange)30;
+/* category overlay on image */
+.news-thumb-overlay {
+  position: absolute; top: .75rem; left: .75rem;
+  font-size: .68rem; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase;
+  background: var(--orange); color: #fff;
   border-radius: 6px; padding: 3px 10px;
+  backdrop-filter: blur(4px);
+}
+
+/* card body */
+.news-body {
+  padding: 1.6rem 2rem;
+  display: flex; flex-direction: column; justify-content: center;
 }
 .news-date {
   font-size: .75rem; color: var(--muted);
   font-family: 'Space Mono', monospace;
+  margin-bottom: .6rem;
 }
-
 .news-title {
-  font-size: 1.18rem; font-weight: 700;
-  line-height: 1.35; margin-bottom: .55rem;
+  font-size: 1.12rem; font-weight: 700;
+  line-height: 1.4; margin-bottom: .6rem;
   transition: color .2s;
 }
 .news-card:hover .news-title { color: var(--orange); }
-
 .news-excerpt {
-  color: var(--muted); font-size: .9rem; line-height: 1.65;
+  color: var(--muted); font-size: .88rem; line-height: 1.65;
   display: -webkit-box; -webkit-line-clamp: 2;
   -webkit-box-orient: vertical; overflow: hidden;
+  margin-bottom: .9rem;
 }
-
 .news-read-more {
   display: inline-flex; align-items: center; gap: 5px;
-  font-size: .82rem; font-weight: 700;
-  color: var(--orange); margin-top: .8rem;
+  font-size: .82rem; font-weight: 700; color: var(--orange);
   opacity: 0; transform: translateX(-6px);
   transition: opacity .25s, transform .25s;
 }
@@ -135,15 +146,17 @@
 .page-dots { color: var(--muted); padding: 0 .3rem; line-height: 42px; }
 
 /* ── EMPTY STATE ─────────────────────────────── */
-.empty-news {
-  text-align: center; padding: 6rem 2rem;
-  color: var(--muted);
-}
+.empty-news { text-align: center; padding: 6rem 2rem; color: var(--muted); }
 .empty-news-icon { font-size: 4rem; margin-bottom: 1rem; }
 
-@media (max-width: 600px) {
-  .news-card { grid-template-columns: 1fr; gap: 1rem; padding: 1.5rem; }
-  .news-emoji { width: 48px; height: 48px; font-size: 1.4rem; }
+/* ── RESPONSIVE ─────────────────────────────── */
+@media (max-width: 700px) {
+  .news-card { grid-template-columns: 1fr; }
+  .news-thumb { height: 180px; }
+  .news-body { padding: 1.3rem 1.5rem; }
+}
+@media (max-width: 440px) {
+  .news-thumb { height: 150px; }
 }
 </style>
 {% endblock %}
@@ -155,7 +168,7 @@
   <div class="news-hero-eyebrow">{{ t("სიახლეები და განახლებები", "News & Updates") }}</div>
   <h1 class="news-hero-title">
     {{ t("რა ხდება", "What's happening") }}<br/>
-    <span class="accent">CodeQuest</span>-{{ t("ზე?", "?") }}
+    <span class="accent">CodeMama</span>-{{ t("ზე?", "?") }}
   </h1>
   <p class="news-hero-sub">
     {{ t("პლატფორმის უახლესი სიახლეები, განახლებები და გამოცხადებები.", "Latest platform news, updates and announcements.") }}
@@ -168,16 +181,22 @@
     {% for item in news %}
     <a href="{{ url_for('main.news_detail', news_id=item.id) }}"
        class="news-card reveal" style="transition-delay: {{ loop.index0 * 0.05 }}s">
-      <div class="news-emoji">{{ item.emoji }}</div>
+
+      {# Thumbnail #}
+      <div class="news-thumb">
+        {% if item.image_url %}
+          <img src="{{ item.image_url }}" alt="{{ item.title_ka if lang == 'ka' else item.title_en }}" loading="lazy"/>
+        {% else %}
+          <div class="news-thumb-fallback">{{ item.emoji }}</div>
+        {% endif %}
+        <span class="news-thumb-overlay">
+          {{ item.category_ka if lang == 'ka' else item.category_en }}
+        </span>
+      </div>
+
+      {# Body #}
       <div class="news-body">
-        <div class="news-meta">
-          <span class="news-category">
-            {{ item.category_ka if lang == 'ka' else item.category_en }}
-          </span>
-          <span class="news-date">
-            {{ item.created_at.strftime('%d %b %Y') }}
-          </span>
-        </div>
+        <div class="news-date">{{ item.created_at.strftime('%d %b %Y') }}</div>
         <div class="news-title">
           {{ item.title_ka if lang == 'ka' else item.title_en }}
         </div>
@@ -201,13 +220,9 @@
 {# ── PAGINATION ── #}
 {% if pagination and pagination.pages > 1 %}
 <div class="pagination">
-  {# Prev #}
   <a href="{{ url_for('main.index', page=pagination.prev_num) }}"
-     class="page-btn {% if not pagination.has_prev %}disabled{% endif %}">
-    ‹
-  </a>
+     class="page-btn {% if not pagination.has_prev %}disabled{% endif %}">‹</a>
 
-  {# Pages with ellipsis #}
   {% set cur = pagination.page %}
   {% set total = pagination.pages %}
   {% for p in pagination.iter_pages(left_edge=1, left_current=2, right_current=2, right_edge=1) %}
@@ -219,11 +234,8 @@
     {% endif %}
   {% endfor %}
 
-  {# Next #}
   <a href="{{ url_for('main.index', page=pagination.next_num) }}"
-     class="page-btn {% if not pagination.has_next %}disabled{% endif %}">
-    ›
-  </a>
+     class="page-btn {% if not pagination.has_next %}disabled{% endif %}">›</a>
 </div>
 {% endif %}
 

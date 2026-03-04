@@ -1,10 +1,8 @@
 /* ═══════════════════════════════════════
    CodeQuest — main.js
-   Global interactions: cursor, loader,
-   theme, language, modal, FAQ, reveal
 ═══════════════════════════════════════ */
 
-/* ── LOADER ───────────────────────────── */
+/* ── LOADER ── */
 const loader     = document.getElementById('loader');
 const loaderText = document.getElementById('loaderText');
 const loadMsgs   = { ka: ['იტვირთება...','კომპილირება...','მომზადება...'], en: ['Loading...','Compiling...','Preparing...'] };
@@ -20,7 +18,7 @@ window.addEventListener('load', () => {
   setTimeout(() => loader && loader.classList.add('hidden'), 700);
 });
 
-/* ── CUSTOM CURSOR ────────────────────── */
+/* ── CUSTOM CURSOR ── */
 const cur = document.getElementById('cursor');
 const dot = document.getElementById('cursor-dot');
 if (cur && dot) {
@@ -34,18 +32,16 @@ if (cur && dot) {
   });
 }
 
-/* ── THEME ────────────────────────────── */
+/* ── THEME ── */
 const themeToggle = document.getElementById('themeToggle');
 const htmlRoot    = document.getElementById('htmlRoot') || document.documentElement;
 const knob        = themeToggle ? themeToggle.querySelector('.theme-toggle-knob') : null;
 
-// Restore saved theme
 const savedTheme = localStorage.getItem('cq_theme');
 if (savedTheme) {
   htmlRoot.dataset.theme = savedTheme;
   if (knob) knob.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
 }
-
 if (themeToggle) {
   themeToggle.addEventListener('click', () => {
     const isDark = htmlRoot.dataset.theme === 'dark';
@@ -55,17 +51,7 @@ if (themeToggle) {
   });
 }
 
-/* ── LANGUAGE (client-side text swap) ── */
-// Server sets session lang; this handles instant swap on same page via [data-ka]/[data-en]
-document.querySelectorAll('.lang-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    // The <a href> will reload with new lang session — this just handles visual feedback
-    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  });
-});
-
-/* ── HAMBURGER ────────────────────────── */
+/* ── HAMBURGER ── */
 const hamburger = document.getElementById('hamburger');
 const mobileNav = document.getElementById('mobileNav');
 if (hamburger && mobileNav) {
@@ -73,13 +59,13 @@ if (hamburger && mobileNav) {
 }
 function closeMobile() { mobileNav && mobileNav.classList.remove('open'); }
 
-/* ── SCROLL REVEAL ────────────────────── */
+/* ── SCROLL REVEAL ── */
 const revealObserver = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
 }, { threshold: 0.08 });
 document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
-/* ── XP TOAST ─────────────────────────── */
+/* ── XP TOAST ── */
 function showXP(amount = '+50 XP') {
   const t   = document.getElementById('xpToast');
   const amt = document.getElementById('xpAmount');
@@ -89,7 +75,7 @@ function showXP(amount = '+50 XP') {
   setTimeout(() => t.classList.remove('show'), 2800);
 }
 
-/* ── AUTH MODAL ───────────────────────── */
+/* ── AUTH MODAL ── */
 function openModal(tab = 'login') {
   const m = document.getElementById('authModal');
   if (!m) { window.location.href = URLS.login; return; }
@@ -113,7 +99,7 @@ function switchTab(tab) {
 const overlay = document.getElementById('authModal');
 if (overlay) overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
 
-/* ── AJAX LOGIN ───────────────────────── */
+/* ── AJAX LOGIN ── */
 async function submitLogin() {
   const email    = document.getElementById('loginEmail')?.value;
   const password = document.getElementById('loginPassword')?.value;
@@ -126,7 +112,6 @@ async function submitLogin() {
     else if (errEl) errEl.textContent = data.error || 'შეცდომა.';
   } catch { if (errEl) errEl.textContent = 'კავშირის შეცდომა.'; }
 }
-
 async function submitRegister() {
   const username = document.getElementById('regUsername')?.value;
   const email    = document.getElementById('regEmail')?.value;
@@ -141,13 +126,8 @@ async function submitRegister() {
   } catch { if (errEl) errEl.textContent = 'კავშირის შეცდომა.'; }
 }
 
-/* ── FAQ ──────────────────────────────── */
-document.querySelectorAll('.faq-item').forEach(item => {
-  const btn = item.querySelector('.faq-q');
-  if (btn) btn.addEventListener('click', () => item.classList.toggle('open'));
-});
-
-/* ── FLASH AUTO DISMISS ───────────────── */
+/* ── FLASH AUTO DISMISS ── */
 setTimeout(() => {
   document.querySelectorAll('.flash').forEach(f => f.style.opacity = '0');
 }, 4000);
+

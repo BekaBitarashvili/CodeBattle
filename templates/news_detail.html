@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title_ka if lang == 'ka' else item.title_en }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── NEWS DETAIL PAGE ───────────────────────── */
+.nd-wrap {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: calc(var(--nav-h) + 3rem) clamp(1rem,5vw,2rem) 6rem;
+}
+
+/* back link */
+.nd-back {
+  display: inline-flex; align-items: center; gap: .5rem;
+  color: var(--muted); text-decoration: none;
+  font-size: .88rem; font-weight: 600;
+  margin-bottom: 2.5rem;
+  transition: color .2s, gap .2s;
+}
+.nd-back:hover { color: var(--orange); gap: .8rem; }
+
+/* header card */
+.nd-header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 2.8rem 3rem;
+  margin-bottom: 2rem;
+  position: relative; overflow: hidden;
+  backdrop-filter: blur(12px);
+}
+.nd-header::before {
+  content: '';
+  position: absolute; top: -80px; right: -60px;
+  width: 260px; height: 260px;
+  background: radial-gradient(circle, var(--orange)18, transparent 70%);
+  pointer-events: none;
+}
+
+.nd-emoji-row {
+  display: flex; align-items: center; gap: 1.2rem;
+  margin-bottom: 1.4rem;
+}
+.nd-emoji {
+  width: 68px; height: 68px; border-radius: 18px;
+  background: linear-gradient(135deg, var(--orange)22, var(--blue)18);
+  border: 1px solid var(--orange)28;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; flex-shrink: 0;
+}
+.nd-meta-group { display: flex; flex-direction: column; gap: .35rem; }
+.nd-category {
+  font-size: .72rem; font-weight: 800; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--orange);
+  background: var(--orange)18; border: 1px solid var(--orange)30;
+  border-radius: 6px; padding: 3px 11px; display: inline-block;
+  width: fit-content;
+}
+.nd-date {
+  font-size: .78rem; color: var(--muted);
+  font-family: 'Space Mono', monospace;
+}
+
+.nd-title {
+  font-size: clamp(1.5rem, 3.5vw, 2.1rem);
+  font-weight: 900; line-height: 1.2;
+  position: relative; z-index: 1;
+}
+
+/* body */
+.nd-body {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.5rem 3rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(12px);
+}
+.nd-body-text {
+  font-size: 1.05rem;
+  line-height: 1.9;
+  color: var(--muted);
+}
+.nd-body-text p { margin-bottom: 1.2rem; }
+.nd-body-text p:last-child { margin-bottom: 0; }
+
+/* divider */
+.nd-divider {
+  width: 48px; height: 3px;
+  background: linear-gradient(90deg, var(--orange), var(--orange2));
+  border-radius: 2px;
+  margin: 2rem 0;
+}
+
+/* prev / next nav */
+.nd-nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.nd-nav-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px; padding: 1.4rem 1.6rem;
+  text-decoration: none; color: var(--text);
+  transition: transform .25s, border-color .25s, box-shadow .25s;
+  display: flex; flex-direction: column; gap: .35rem;
+  min-width: 0;
+}
+.nd-nav-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--orange)44;
+  box-shadow: 0 14px 36px #0004;
+}
+.nd-nav-card.nd-next { text-align: right; align-items: flex-end; }
+.nd-nav-label {
+  font-size: .72rem; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--orange); opacity: .8;
+}
+.nd-nav-title {
+  font-size: .9rem; font-weight: 700; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.nd-nav-empty {
+  /* placeholder so grid stays balanced when one side is missing */
+}
+
+@media (max-width: 640px) {
+  .nd-header, .nd-body { padding: 1.8rem 1.5rem; }
+  .nd-nav { grid-template-columns: 1fr; }
+  .nd-nav-card.nd-next { text-align: left; align-items: flex-start; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="nd-wrap">
+
+  {# ── BACK ── #}
+  <a href="{{ url_for('main.index') }}" class="nd-back reveal">
+    ← {{ t("სიახლეებზე დაბრუნება", "Back to news") }}
+  </a>
+
+  {# ── HEADER CARD ── #}
+  <div class="nd-header reveal">
+    <div class="nd-emoji-row">
+      <div class="nd-emoji">{{ item.emoji }}</div>
+      <div class="nd-meta-group">
+        <span class="nd-category">
+          {{ item.category_ka if lang == 'ka' else item.category_en }}
+        </span>
+        <span class="nd-date">{{ item.created_at.strftime('%d %B %Y · %H:%M') }}</span>
+      </div>
+    </div>
+    <h1 class="nd-title">
+      {{ item.title_ka if lang == 'ka' else item.title_en }}
+    </h1>
+  </div>
+
+  {# ── BODY ── #}
+  <div class="nd-body reveal">
+    <div class="nd-body-text">
+      {% set body = item.body_ka if lang == 'ka' else item.body_en %}
+      {# Split on double newlines to render paragraphs #}
+      {% for para in body.split('\n') %}
+        {% if para.strip() %}
+          <p>{{ para.strip() }}</p>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <div class="nd-divider"></div>
+
+    <div style="display:flex; align-items:center; gap:.6rem; color:var(--muted); font-size:.82rem">
+      <span>🗓</span>
+      <span>{{ t("გამოქვეყნდა", "Published") }}: {{ item.created_at.strftime('%d %B %Y') }}</span>
+    </div>
+  </div>
+
+  {# ── PREV / NEXT ── #}
+  <div class="nd-nav reveal">
+    {% if prev_item %}
+    <a href="{{ url_for('main.news_detail', news_id=prev_item.id) }}" class="nd-nav-card nd-prev">
+      <span class="nd-nav-label">← {{ t("წინა სიახლე", "Previous") }}</span>
+      <span class="nd-nav-title">
+        {{ prev_item.title_ka if lang == 'ka' else prev_item.title_en }}
+      </span>
+    </a>
+    {% else %}
+    <div class="nd-nav-empty"></div>
+    {% endif %}
+
+    {% if next_item %}
+    <a href="{{ url_for('main.news_detail', news_id=next_item.id) }}" class="nd-nav-card nd-next">
+      <span class="nd-nav-label">{{ t("შემდეგი სიახლე", "Next") }} →</span>
+      <span class="nd-nav-title">
+        {{ next_item.title_ka if lang == 'ka' else next_item.title_en }}
+      </span>
+    </a>
+    {% else %}
+    <div class="nd-nav-empty"></div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

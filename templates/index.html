@@ -155,7 +155,7 @@
   <div class="news-hero-eyebrow">{{ t("სიახლეები და განახლებები", "News & Updates") }}</div>
   <h1 class="news-hero-title">
     {{ t("რა ხდება", "What's happening") }}<br/>
-    <span class="accent">CodeMama</span>-{{ t("ზე?", "?") }}
+    <span class="accent">CodeQuest</span>-{{ t("ზე?", "?") }}
   </h1>
   <p class="news-hero-sub">
     {{ t("პლატფორმის უახლესი სიახლეები, განახლებები და გამოცხადებები.", "Latest platform news, updates and announcements.") }}
@@ -166,7 +166,8 @@
 <div class="news-grid">
   {% if news %}
     {% for item in news %}
-    <article class="news-card reveal" style="transition-delay: {{ loop.index0 * 0.05 }}s">
+    <a href="{{ url_for('main.news_detail', news_id=item.id) }}"
+       class="news-card reveal" style="transition-delay: {{ loop.index0 * 0.05 }}s">
       <div class="news-emoji">{{ item.emoji }}</div>
       <div class="news-body">
         <div class="news-meta">
@@ -187,7 +188,7 @@
           {{ t("დაწვრილებით", "Read more") }} →
         </span>
       </div>
-    </article>
+    </a>
     {% endfor %}
   {% else %}
     <div class="empty-news">

@@ -53,7 +53,7 @@
 
     <ul class="nav-links" id="navLinks">
       <li><a href="{{ url_for('main.index') }}"    {% if request.endpoint == 'main.index' %}class="active-link"{% endif %}>{{ t("მთავარი", "Home") }}</a></li>
-      <li><a href="{{ url_for('about.index') }}"   {% if request.endpoint and request.endpoint.startswith('about') %}class="active-link"{% endif %}>{{ t("ჩვენს შესახებ", "About Us") }}</a></li>
+      <li><a href="{{ url_for('about.index') }}"   {% if request.endpoint and request.endpoint.startswith('about') %}class="active-link"{% endif %}>{{ t("შესახებ", "About") }}</a></li>
       <li><a href="{{ url_for('tasks.index') }}"   {% if request.endpoint and request.endpoint.startswith('tasks') %}class="active-link"{% endif %}>{{ t("ამოცანები", "Problems") }}</a></li>
       <li><a href="{{ url_for('ratings.index') }}" {% if request.endpoint and request.endpoint.startswith('ratings') %}class="active-link"{% endif %}>{{ t("რეიტინგი", "Ratings") }}</a></li>
       <li><a href="{{ url_for('olympiad.index') }}"{% if request.endpoint and request.endpoint.startswith('olympiad') %}class="active-link"{% endif %}>{{ t("ოლიმპიადა", "Olympiad") }}</a></li>
@@ -95,7 +95,7 @@
   <div class="mobile-nav" id="mobileNav">
     <a href="{{ url_for('main.index') }}"    onclick="closeMobile()">{{ t("მთავარი","Home") }}</a>
     <a href="{{ url_for('about.index') }}"   onclick="closeMobile()">{{ t("შესახებ","About") }}</a>
-    <a href="{{ url_for('tasks.index') }}"   onclick="closeMobile()">{{ t("ტასკები","Tasks") }}</a>
+    <a href="{{ url_for('tasks.index') }}"   onclick="closeMobile()">{{ t("ამოცანები","Problems") }}</a>
     <a href="{{ url_for('ratings.index') }}" onclick="closeMobile()">{{ t("რეიტინგი","Ratings") }}</a>
     <a href="{{ url_for('olympiad.index') }}"onclick="closeMobile()">{{ t("ოლიმპიადა","Olympiad") }}</a>
     <a href="{{ url_for('help.index') }}"    onclick="closeMobile()">{{ t("დახმარება","Help") }}</a>
@@ -120,8 +120,8 @@
     <div class="footer-copy">© 2025 CodeMama. {{ t("ყველა უფლება დაცულია", "All rights reserved") }}</div>
     <div class="footer-links">
       <a href="{{ url_for('main.index') }}">{{ t("მთავარი","Home") }}</a>
-      <a href="{{ url_for('about.index') }}">{{ t("ჩვენს შესახებ","About Us") }}</a>
-      <a href="{{ url_for('tasks.index') }}">{{ t("ამოცანები","Tasks") }}</a>
+      <a href="{{ url_for('about.index') }}">{{ t("შესახებ","About") }}</a>
+      <a href="{{ url_for('tasks.index') }}">{{ t("ამოცანები","Problems") }}</a>
       <a href="{{ url_for('olympiad.index') }}">{{ t("ოლიმპიადა","Olympiad") }}</a>
       <a href="{{ url_for('help.index') }}">{{ t("დახმარება","Help") }}</a>
     </div>
@@ -138,7 +138,7 @@
     <div class="modal" style="position:relative">
       <button class="modal-close" onclick="closeModal()">✕</button>
       <div class="modal-title">{{ t("კეთილი იყოს შენი მობრძანება", "Welcome") }}</div>
-      <div class="modal-sub">{{ t("CodeMama-ზე შესვლა ან რეგისტრაცია", "Login or register to CodeMama") }}</div>
+      <div class="modal-sub">{{ t("CodeMama-ში შესვლა ან რეგისტრაცია", "Login or register to CodeMama") }}</div>
       <div class="modal-tabs">
         <button class="modal-tab active" id="tabLogin"    onclick="switchTab('login')">{{ t("შესვლა","Login") }}</button>
         <button class="modal-tab"        id="tabRegister" onclick="switchTab('register')">{{ t("რეგისტრაცია","Register") }}</button>
@@ -154,22 +154,38 @@
         </div>
         <div class="form-error" id="loginError"></div>
         <button class="btn-primary btn-block" onclick="submitLogin()">{{ t("შესვლა","Login") }}</button>
+        <div style="text-align:center;margin-top:.9rem">
+          <a href="{{ url_for('auth.forgot_password') }}" style="font-size:.82rem;color:var(--muted);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--muted)'">
+            {{ t("პაროლი დაგავიწყდა?","Forgot password?") }}
+          </a>
+        </div>
       </div>
       <div id="registerForm" style="display:none">
-        <div class="input-group">
-          <label>{{ t("სახელი","Username") }}</label>
-          <input type="text" id="regUsername" placeholder="giorgi_codes"/>
+        <div id="regFormFields">
+          <div class="input-group">
+            <label>{{ t("სახელი","Username") }}</label>
+            <input type="text" id="regUsername" placeholder="giorgi_codes"/>
+          </div>
+          <div class="input-group">
+            <label>{{ t("ელ-ფოსტა","Email") }}</label>
+            <input type="email" id="regEmail" placeholder="you@example.com"/>
+          </div>
+          <div class="input-group">
+            <label>{{ t("პაროლი","Password") }}</label>
+            <input type="password" id="regPassword" placeholder="••••••••"/>
+          </div>
+          <div class="input-group">
+            <label>{{ t("გაიმეორე პაროლი","Confirm Password") }}</label>
+            <input type="password" id="regPassword2" placeholder="••••••••"/>
+          </div>
+          <div class="form-error" id="registerError"></div>
+          <button class="btn-primary btn-block" onclick="submitRegister()">{{ t("რეგისტრაცია","Register") }}</button>
         </div>
-        <div class="input-group">
-          <label>{{ t("ელ-ფოსტა","Email") }}</label>
-          <input type="email" id="regEmail" placeholder="you@example.com"/>
+        <div id="regSuccess" style="display:none;text-align:center;padding:1rem 0">
+          <div style="font-size:2.5rem;margin-bottom:.6rem">📧</div>
+          <div style="font-weight:800;font-size:1.05rem;margin-bottom:.4rem">{{ t("შეამოწმეთ ელ-ფოსტა!","Check your email!") }}</div>
+          <div style="color:var(--muted);font-size:.88rem;line-height:1.6">{{ t("ვერიფიკაციის ლინკი გაგზავნილია. დაადასტურეთ ანგარიში და შედით.","Verification link sent. Confirm your account and log in.") }}</div>
         </div>
-        <div class="input-group">
-          <label>{{ t("პაროლი","Password") }}</label>
-          <input type="password" id="regPassword" placeholder="••••••••"/>
-        </div>
-        <div class="form-error" id="registerError"></div>
-        <button class="btn-primary btn-block" onclick="submitRegister()">{{ t("რეგისტრაცია","Register") }}</button>
       </div>
     </div>
   </div>

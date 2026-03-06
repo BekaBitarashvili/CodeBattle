@@ -6,43 +6,57 @@ from models import User
 auth_bp = Blueprint("auth", __name__)
 
 
+# ─────────────────────────────────────────────
+#  LOGIN
+# ─────────────────────────────────────────────
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard.index"))
 
     if request.method == "POST":
-        data = request.get_json(silent=True) or request.form
+        data     = request.get_json(silent=True) or request.form
         email    = data.get("email", "").strip().lower()
         password = data.get("password", "")
-        remember = bool(data.get("remember", False))
 
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
-            login_user(user, remember=remember)
+            if not user.email_verified:
+                err = "გთხოვთ ჯერ დაადასტუროთ ელ-ფოსტა. შეამოწმეთ inbox."
+                if request.is_json:
+                    return jsonify({"ok": False, "error": err}), 403
+                flash(err, "warning")
+                return render_template("auth/login.html")
+
+            login_user(user, remember=bool(data.get("remember")))
             user.update_streak()
             _award_streak_badges(user)
             if request.is_json:
                 return jsonify({"ok": True, "redirect": url_for("dashboard.index")})
             return redirect(url_for("dashboard.index"))
 
+        err = "ელ-ფოსტა ან პაროლი არასწორია."
         if request.is_json:
-            return jsonify({"ok": False, "error": "ელ-ფოსტა ან პაროლი არასწორია."}), 401
-        flash("ელ-ფოსტა ან პაროლი არასწორია.", "danger")
+            return jsonify({"ok": False, "error": err}), 401
+        flash(err, "danger")
 
     return render_template("auth/login.html")
 
 
+# ─────────────────────────────────────────────
+#  REGISTER
+# ─────────────────────────────────────────────
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard.index"))
 
     if request.method == "POST":
-        data = request.get_json(silent=True) or request.form
-        username = data.get("username", "").strip()
-        email    = data.get("email", "").strip().lower()
-        password = data.get("password", "")
+        data      = request.get_json(silent=True) or request.form
+        username  = data.get("username", "").strip()
+        email     = data.get("email", "").strip().lower()
+        password  = data.get("password", "")
+        password2 = data.get("password2", "")
 
         error = None
         if not username or len(username) < 3:
@@ -51,6 +65,8 @@ def register():
             error = "ელ-ფოსტა არასწორია."
         elif len(password) < 6:
             error = "პაროლი უნდა იყოს მინიმუმ 6 სიმბოლო."
+        elif password != password2:
+            error = "პაროლები არ ემთხვევა."
         elif User.query.filter_by(email=email).first():
             error = "ეს ელ-ფოსტა უკვე გამოყენებულია."
         elif User.query.filter_by(username=username).first():
@@ -61,20 +77,122 @@ def register():
                 return jsonify({"ok": False, "error": error}), 400
             flash(error, "danger")
         else:
-            user = User(username=username, email=email)
+            user = User(username=username, email=email, email_verified=False)
             user.set_password(password)
             db.session.add(user)
             db.session.commit()
-            # Grant First Blood badge if first solve
-            login_user(user)
-            user.update_streak()
+            _send_verify(user)
+            msg = "რეგისტრაცია წარმატებულია! შეამოწმეთ ელ-ფოსტა და დაადასტურეთ ანგარიში."
             if request.is_json:
-                return jsonify({"ok": True, "redirect": url_for("dashboard.index")})
-            return redirect(url_for("dashboard.index"))
+                return jsonify({"ok": True, "message": msg, "needs_verify": True})
+            flash(msg, "success")
+            return redirect(url_for("auth.login"))
 
     return render_template("auth/register.html")
 
 
+# ─────────────────────────────────────────────
+#  VERIFY EMAIL
+# ─────────────────────────────────────────────
+@auth_bp.route("/verify/<token>")
+def verify_email(token):
+    from utils.email_tokens import confirm_verify_token
+    email = confirm_verify_token(token)
+    if not email:
+        flash("ვერიფიკაციის ლინკი ვადაგასულია ან არასწორია.", "danger")
+        return redirect(url_for("auth.login"))
+
+    user = User.query.filter_by(email=email).first_or_404()
+    if user.email_verified:
+        flash("ელ-ფოსტა უკვე დადასტურებულია. შეგიძლიათ შეხვიდეთ.", "info")
+        return redirect(url_for("auth.login"))
+
+    user.email_verified = True
+    db.session.commit()
+    flash("ელ-ფოსტა წარმატებით დადასტურდა! 🎉 შეგიძლიათ შეხვიდეთ.", "success")
+    return redirect(url_for("auth.login"))
+
+
+# ─────────────────────────────────────────────
+#  RESEND VERIFICATION
+# ─────────────────────────────────────────────
+@auth_bp.route("/resend-verify", methods=["POST"])
+def resend_verify():
+    data  = request.get_json(silent=True) or request.form
+    email = data.get("email", "").strip().lower()
+    user  = User.query.filter_by(email=email).first()
+    if user and not user.email_verified:
+        _send_verify(user)
+    # Always show success (don't leak whether email exists)
+    msg = "ვერიფიკაციის ლინკი გაგზავნილია. შეამოწმეთ inbox."
+    if request.is_json:
+        return jsonify({"ok": True, "message": msg})
+    flash(msg, "success")
+    return redirect(url_for("auth.login"))
+
+
+# ─────────────────────────────────────────────
+#  FORGOT PASSWORD
+# ─────────────────────────────────────────────
+@auth_bp.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        data  = request.get_json(silent=True) or request.form
+        email = data.get("email", "").strip().lower()
+        user  = User.query.filter_by(email=email).first()
+        if user:
+            _send_reset(user)
+        msg = "თუ ეს ელ-ფოსტა დარეგისტრირებულია, მიიღებთ პაროლის აღდგენის ლინკს."
+        if request.is_json:
+            return jsonify({"ok": True, "message": msg})
+        flash(msg, "success")
+        return redirect(url_for("auth.forgot_password"))
+
+    return render_template("auth/forgot_password.html")
+
+
+# ─────────────────────────────────────────────
+#  RESET PASSWORD
+# ─────────────────────────────────────────────
+@auth_bp.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    from utils.email_tokens import confirm_reset_token
+    email = confirm_reset_token(token)
+    if not email:
+        flash("პაროლის აღდგენის ლინკი ვადაგასულია ან არასწორია.", "danger")
+        return redirect(url_for("auth.forgot_password"))
+
+    user = User.query.filter_by(email=email).first_or_404()
+
+    if request.method == "POST":
+        data      = request.get_json(silent=True) or request.form
+        password  = data.get("password", "")
+        password2 = data.get("password2", "")
+
+        error = None
+        if len(password) < 6:
+            error = "პაროლი უნდა იყოს მინიმუმ 6 სიმბოლო."
+        elif password != password2:
+            error = "პაროლები არ ემთხვევა."
+
+        if error:
+            if request.is_json:
+                return jsonify({"ok": False, "error": error}), 400
+            flash(error, "danger")
+        else:
+            user.set_password(password)
+            db.session.commit()
+            flash("პაროლი წარმატებით შეიცვალა! შეგიძლიათ შეხვიდეთ. 🎉", "success")
+            if request.is_json:
+                return jsonify({"ok": True, "redirect": url_for("auth.login")})
+            return redirect(url_for("auth.login"))
+
+    return render_template("auth/reset_password.html", token=token)
+
+
+# ─────────────────────────────────────────────
+#  LOGOUT
+# ─────────────────────────────────────────────
 @auth_bp.route("/logout")
 @login_required
 def logout():
@@ -82,16 +200,36 @@ def logout():
     return redirect(url_for("main.index"))
 
 
-# ── Internal helpers ──────────────────────────────────────
-def _award_streak_badges(user: User):
+# ─────────────────────────────────────────────
+#  HELPERS
+# ─────────────────────────────────────────────
+def _send_verify(user):
+    from utils.email_tokens import generate_verify_token
+    from utils.send_email import send_verification_email
+    token = generate_verify_token(user.email)
+    verify_url = url_for("auth.verify_email", token=token, _external=True)
+    try:
+        send_verification_email(user.email, user.username, verify_url)
+    except Exception as e:
+        print(f"[MAIL ERROR] verify: {e}")
+
+
+def _send_reset(user):
+    from utils.email_tokens import generate_reset_token
+    from utils.send_email import send_reset_email
+    token = generate_reset_token(user.email)
+    reset_url = url_for("auth.reset_password", token=token, _external=True)
+    try:
+        send_reset_email(user.email, user.username, reset_url)
+    except Exception as e:
+        print(f"[MAIL ERROR] reset: {e}")
+
+
+def _award_streak_badges(user):
     from models import Badge
-    if user.streak >= 7:
-        badge = Badge.query.filter_by(slug="warrior_7").first()
-        if badge and not user.has_badge("warrior_7"):
-            user.badges.append(badge)
-            db.session.commit()
-    if user.streak >= 30:
-        badge = Badge.query.filter_by(slug="on_fire").first()
-        if badge and not user.has_badge("on_fire"):
-            user.badges.append(badge)
-            db.session.commit()
+    for slug, days in [("warrior_7", 7), ("on_fire", 30)]:
+        if user.streak >= days:
+            badge = Badge.query.filter_by(slug=slug).first()
+            if badge and not user.has_badge(slug):
+                user.badges.append(badge)
+                db.session.commit()

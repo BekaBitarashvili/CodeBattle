@@ -113,16 +113,27 @@ async function submitLogin() {
   } catch { if (errEl) errEl.textContent = 'კავშირის შეცდომა.'; }
 }
 async function submitRegister() {
-  const username = document.getElementById('regUsername')?.value;
-  const email    = document.getElementById('regEmail')?.value;
-  const password = document.getElementById('regPassword')?.value;
-  const errEl    = document.getElementById('registerError');
-  if (!username || !email || !password) { if (errEl) errEl.textContent = 'ყველა ველი სავალდებულოა.'; return; }
+  const username  = document.getElementById('regUsername')?.value;
+  const email     = document.getElementById('regEmail')?.value;
+  const password  = document.getElementById('regPassword')?.value;
+  const password2 = document.getElementById('regPassword2')?.value;
+  const errEl     = document.getElementById('registerError');
+  if (!username || !email || !password || !password2) { if (errEl) errEl.textContent = 'ყველა ველი სავალდებულოა.'; return; }
+  if (password !== password2) { if (errEl) errEl.textContent = 'პაროლები არ ემთხვევა.'; return; }
   try {
-    const r    = await fetch(URLS.register, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username,email,password}) });
+    const r    = await fetch(URLS.register, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username,email,password,password2}) });
     const data = await r.json();
-    if (data.ok) window.location.href = data.redirect;
-    else if (errEl) errEl.textContent = data.error || 'შეცდომა.';
+    if (data.ok && data.needs_verify) {
+      // Show success state — email sent
+      const fields  = document.getElementById('regFormFields');
+      const success = document.getElementById('regSuccess');
+      if (fields)  fields.style.display  = 'none';
+      if (success) success.style.display = 'block';
+    } else if (data.ok) {
+      window.location.href = data.redirect;
+    } else if (errEl) {
+      errEl.textContent = data.error || 'შეცდომა.';
+    }
   } catch { if (errEl) errEl.textContent = 'კავშირის შეცდომა.'; }
 }
 
@@ -131,3 +142,4 @@ setTimeout(() => {
   document.querySelectorAll('.flash').forEach(f => f.style.opacity = '0');
 }, 4000);
 
+/* NOTE: FAQ toggle is handled per-page in extra_js, not here */

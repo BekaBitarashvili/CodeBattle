@@ -54,6 +54,9 @@ class User(UserMixin, db.Model):
     longest_streak= db.Column(db.Integer, default=0)
     last_login_date = db.Column(db.Date,  nullable=True)
 
+    # Email verification
+    email_verified = db.Column(db.Boolean, default=False)
+
     # Language preference  ("ka" | "en")
     language      = db.Column(db.String(4), default="ka")
 

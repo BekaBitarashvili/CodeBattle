@@ -7,13 +7,40 @@ from datetime import datetime
 tasks_bp = Blueprint("tasks", __name__)
 
 
+TASKS_PER_PAGE = 20
+
 @tasks_bp.route("/")
 def index():
-    difficulty = request.args.get("difficulty", "easy")
-    if difficulty not in ("easy", "medium", "hard"):
-        difficulty = "easy"
-    tasks = Task.query.filter_by(difficulty=difficulty, is_active=True).all()
-    return render_template("tasks/index.html", tasks=tasks, difficulty=difficulty)
+    difficulty = request.args.get("difficulty", "")
+    page       = request.args.get("page", 1, type=int)
+    search     = request.args.get("q", "").strip()
+
+    q = Task.query.filter_by(is_active=True)
+    if difficulty in ("easy", "medium", "hard"):
+        q = q.filter_by(difficulty=difficulty)
+    if search:
+        q = q.filter(Task.title.ilike(f"%{search}%"))
+
+    # difficulty ordering: easy < medium < hard
+    diff_order = db.case(
+        {"easy": 1, "medium": 2, "hard": 3},
+        value=Task.difficulty
+    )
+    pagination = q.order_by(diff_order, Task.id.asc()).paginate(
+        page=page, per_page=TASKS_PER_PAGE, error_out=False
+    )
+    # stats for header
+    easy_count   = Task.query.filter_by(is_active=True, difficulty="easy").count()
+    medium_count = Task.query.filter_by(is_active=True, difficulty="medium").count()
+    hard_count   = Task.query.filter_by(is_active=True, difficulty="hard").count()
+    return render_template("tasks/index.html",
+                           tasks=pagination.items,
+                           pagination=pagination,
+                           difficulty=difficulty,
+                           search=search,
+                           easy_count=easy_count,
+                           medium_count=medium_count,
+                           hard_count=hard_count)
 
 
 @tasks_bp.route("/<int:task_id>")

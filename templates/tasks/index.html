@@ -1,40 +1,410 @@
 {% extends "base.html" %}
-{% block title %}ტასკები{% endblock %}
+{% block title %}{{ t("ამოცანები", "Problems") }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ══════════════════════════════════════════════
+   PROBLEMS PAGE  —  LeetCode-inspired, dark
+══════════════════════════════════════════════ */
+
+/* difficulty color tokens */
+:root {
+  --easy:   #00b8a3;
+  --medium: #ffc01e;
+  --hard:   #ff375f;
+  --easy-bg:   #00b8a314;
+  --medium-bg: #ffc01e14;
+  --hard-bg:   #ff375f14;
+}
+
+/* ── PAGE WRAPPER ── */
+.prob-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: calc(70px + 2.5rem) clamp(1rem,4vw,2.5rem) 6rem;
+}
+
+/* ── HERO ── */
+.prob-hero {
+  margin-bottom: 2.5rem;
+}
+.prob-hero-eyebrow {
+  font-size: .72rem; font-weight: 800; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--orange);
+  margin-bottom: .5rem;
+}
+.prob-hero-title {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 900; line-height: 1.1; margin-bottom: .5rem;
+}
+.prob-hero-sub {
+  color: var(--muted); font-size: .95rem;
+}
+
+/* ── TOOLBAR ── */
+.prob-toolbar {
+  display: flex; align-items: center; gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.6rem;
+}
+
+/* search */
+.prob-search {
+  position: relative; flex: 1; min-width: 220px;
+}
+.prob-search input {
+  width: 100%; padding: 11px 16px 11px 42px;
+  border-radius: 12px; border: 1px solid var(--border);
+  background: var(--card); color: var(--text);
+  font-size: .92rem; font-family: 'Outfit', sans-serif;
+  transition: border-color .2s, box-shadow .2s;
+  box-sizing: border-box;
+}
+.prob-search input:focus {
+  outline: none; border-color: var(--orange)66;
+  box-shadow: 0 0 0 3px var(--orange)12;
+}
+.prob-search-icon {
+  position: absolute; left: 14px; top: 50%;
+  transform: translateY(-50%); color: var(--muted);
+  pointer-events: none; font-size: 1rem;
+}
+
+/* difficulty filter pills */
+.prob-filters {
+  display: flex; gap: .5rem; flex-wrap: wrap;
+}
+.prob-filter {
+  padding: 8px 18px; border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card); color: var(--muted);
+  font-size: .82rem; font-weight: 700;
+  text-decoration: none; cursor: pointer;
+  transition: all .18s; white-space: nowrap;
+}
+.prob-filter:hover { border-color: var(--orange)55; color: var(--text); }
+.prob-filter.all.active,
+.prob-filter.all:hover { border-color: var(--orange); color: var(--orange); background: var(--orange)10; }
+.prob-filter.easy.active  { border-color: var(--easy);   color: var(--easy);   background: var(--easy-bg); }
+.prob-filter.medium.active{ border-color: var(--medium); color: var(--medium); background: var(--medium-bg); }
+.prob-filter.hard.active  { border-color: var(--hard);   color: var(--hard);   background: var(--hard-bg); }
+
+/* ── STATS ROW ── */
+.prob-stats {
+  display: flex; gap: 1.2rem; flex-wrap: wrap;
+  margin-bottom: 1.4rem;
+}
+.prob-stat {
+  display: flex; align-items: center; gap: .5rem;
+  font-size: .82rem; color: var(--muted);
+}
+.prob-stat-dot {
+  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+}
+.prob-stat-dot.easy   { background: var(--easy); }
+.prob-stat-dot.medium { background: var(--medium); }
+.prob-stat-dot.hard   { background: var(--hard); }
+.prob-stat strong { color: var(--text); font-weight: 700; }
+
+/* ── TABLE CARD ── */
+.prob-table-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+}
+
+/* header row */
+.prob-thead {
+  display: grid;
+  grid-template-columns: 52px 1fr 130px 90px 90px;
+  padding: .75rem 1.6rem;
+  border-bottom: 1px solid var(--border);
+  font-size: .72rem; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* problem row */
+.prob-row {
+  display: grid;
+  grid-template-columns: 52px 1fr 130px 90px 90px;
+  align-items: center;
+  padding: 0 1.6rem;
+  min-height: 58px;
+  border-bottom: 1px solid var(--border)66;
+  text-decoration: none; color: var(--text);
+  transition: background .18s;
+  position: relative;
+}
+.prob-row:last-child { border-bottom: none; }
+.prob-row:hover { background: var(--orange)06; }
+.prob-row:hover .prob-row-title { color: var(--orange); }
+
+/* solved checkmark */
+.prob-row-status {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+}
+
+/* title */
+.prob-row-title {
+  font-size: .95rem; font-weight: 600;
+  transition: color .18s;
+  padding-right: 1rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* difficulty badge */
+.prob-diff {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 12px; border-radius: 8px;
+  font-size: .78rem; font-weight: 800;
+  width: fit-content;
+}
+.prob-diff.easy   { color: var(--easy);   background: var(--easy-bg);   }
+.prob-diff.medium { color: var(--medium); background: var(--medium-bg); }
+.prob-diff.hard   { color: var(--hard);   background: var(--hard-bg);   }
+.prob-diff-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+}
+.easy .prob-diff-dot   { background: var(--easy); }
+.medium .prob-diff-dot { background: var(--medium); }
+.hard .prob-diff-dot   { background: var(--hard); }
+
+/* acceptance / xp */
+.prob-row-acc, .prob-row-xp {
+  font-size: .85rem; color: var(--muted);
+  font-family: 'Space Mono', monospace;
+}
+.prob-row-xp {
+  color: var(--orange); font-weight: 700;
+}
+
+/* ── EMPTY ── */
+.prob-empty {
+  text-align: center; padding: 5rem 2rem;
+  color: var(--muted);
+}
+.prob-empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+/* ── PAGINATION ── */
+.prob-pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.2rem 1.6rem 0;
+  flex-wrap: wrap; gap: .8rem;
+}
+.prob-pag-info {
+  font-size: .82rem; color: var(--muted);
+  font-family: 'Space Mono', monospace;
+}
+.prob-pag-pages {
+  display: flex; gap: .4rem; align-items: center;
+}
+.prob-pag-btn {
+  min-width: 36px; height: 36px;
+  border-radius: 9px; border: 1px solid var(--border);
+  background: var(--bg3); color: var(--muted);
+  font-size: .85rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none; transition: all .18s;
+  font-family: 'Space Mono', monospace; padding: 0 .6rem;
+}
+.prob-pag-btn:hover { border-color: var(--orange); color: var(--orange); }
+.prob-pag-btn.active {
+  background: var(--orange); border-color: var(--orange);
+  color: #fff; box-shadow: 0 4px 14px var(--orange)33;
+}
+.prob-pag-btn.disabled { opacity: .35; pointer-events: none; }
+.prob-pag-dots { color: var(--muted); padding: 0 .2rem; font-size: .85rem; line-height: 36px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 720px) {
+  .prob-thead { display: none; }
+  .prob-row {
+    grid-template-columns: 36px 1fr auto;
+    grid-template-rows: auto auto;
+    padding: .9rem 1.2rem; min-height: unset; gap: .2rem;
+  }
+  .prob-row-status { grid-row: 1/3; }
+  .prob-row-title  { grid-column: 2; font-size: .9rem; }
+  .prob-diff       { grid-column: 2; grid-row: 2; }
+  .prob-row-acc    { display: none; }
+  .prob-row-xp     { grid-column: 3; grid-row: 1/3; font-size: .82rem; }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<section class="section-pad">
-  <div class="reveal">
-    <div class="section-eyebrow" data-ka="გამოწვევები" data-en="Challenges">გამოწვევები</div>
-    <h1 class="section-title" data-ka="ტასკები სირთულის მიხედვით" data-en="Tasks by Difficulty">ტასკები სირთულის მიხედვით</h1>
+<div class="prob-page">
+
+  {# ── HERO ── #}
+  <div class="prob-hero reveal">
+    <div class="prob-hero-eyebrow">{{ t("გამოწვევები", "Challenges") }}</div>
+    <h1 class="prob-hero-title">
+      {{ t("ამოცანების სია", "Problem Set") }}
+    </h1>
+    <p class="prob-hero-sub">
+      {{ t("გადაჭარბებული პრობლემები, ბეჯები და XP ქულები.", "Solve problems, earn badges and XP.") }}
+    </p>
   </div>
 
-  <div class="difficulty-tabs">
-    <a href="{{ url_for('tasks.index', difficulty='easy') }}"
-       class="diff-tab {% if difficulty=='easy' %}active{% endif %}" data-level="easy">
-       🟢 <span data-ka="მარტივი" data-en="Easy">მარტივი</span>
-    </a>
-    <a href="{{ url_for('tasks.index', difficulty='medium') }}"
-       class="diff-tab {% if difficulty=='medium' %}active{% endif %}" data-level="medium">
-       🟡 <span data-ka="საშუალო" data-en="Medium">საშუალო</span>
-    </a>
-    <a href="{{ url_for('tasks.index', difficulty='hard') }}"
-       class="diff-tab {% if difficulty=='hard' %}active{% endif %}" data-level="hard">
-       🔴 <span data-ka="რთული" data-en="Hard">რთული</span>
-    </a>
+  {# ── TOOLBAR ── #}
+  <div class="prob-toolbar reveal">
+
+    {# Search #}
+    <div class="prob-search">
+      <span class="prob-search-icon">🔍</span>
+      <input type="text" id="probSearch"
+             placeholder="{{ t('ამოცანის ძებნა...', 'Search problems...') }}"
+             value="{{ search }}"
+             onkeydown="if(event.key==='Enter') applyFilters()"/>
+    </div>
+
+    {# Difficulty filters #}
+    <div class="prob-filters">
+      <a class="prob-filter all {% if not difficulty %}active{% endif %}"
+         href="{{ url_for('tasks.index') }}">
+        {{ t("ყველა", "All") }}
+      </a>
+      <a class="prob-filter easy {% if difficulty=='easy' %}active{% endif %}"
+         href="{{ url_for('tasks.index', difficulty='easy') }}">
+        {{ t("მარტივი", "Easy") }}
+      </a>
+      <a class="prob-filter medium {% if difficulty=='medium' %}active{% endif %}"
+         href="{{ url_for('tasks.index', difficulty='medium') }}">
+        {{ t("საშუალო", "Medium") }}
+      </a>
+      <a class="prob-filter hard {% if difficulty=='hard' %}active{% endif %}"
+         href="{{ url_for('tasks.index', difficulty='hard') }}">
+        {{ t("რთული", "Hard") }}
+      </a>
+    </div>
+
   </div>
 
-  <div class="task-list reveal">
-    {% for task in tasks %}
-    <a href="{{ url_for('tasks.detail', task_id=task.id) }}" class="task-card">
-      <div class="task-badge {{ task.difficulty }}"></div>
-      <div class="task-name">{{ task.title }}</div>
-      <div style="color:var(--muted);font-size:.8rem;flex:1">{{ task.solve_count() }} <span data-ka="ამოხსნა" data-en="solves">ამოხსნა</span></div>
-      <div class="task-xp">+{{ task.xp }} XP</div>
-      <div class="task-arrow">›</div>
-    </a>
+  {# ── STATS ── #}
+  <div class="prob-stats reveal">
+    <div class="prob-stat">
+      <span class="prob-stat-dot easy"></span>
+      <span>{{ t("მარტივი", "Easy") }}: <strong>{{ easy_count }}</strong></span>
+    </div>
+    <div class="prob-stat">
+      <span class="prob-stat-dot medium"></span>
+      <span>{{ t("საშუალო", "Medium") }}: <strong>{{ medium_count }}</strong></span>
+    </div>
+    <div class="prob-stat">
+      <span class="prob-stat-dot hard"></span>
+      <span>{{ t("რთული", "Hard") }}: <strong>{{ hard_count }}</strong></span>
+    </div>
+    {% if current_user.is_authenticated %}
+    <div class="prob-stat" style="margin-left:auto">
+      <span>✅ {{ t("ამოხსნილი", "Solved") }}: <strong>{{ current_user.solved_count() }}</strong></span>
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── TABLE ── #}
+  <div class="prob-table-wrap reveal">
+    <div class="prob-thead">
+      <span></span>
+      <span>{{ t("დასახელება", "Title") }}</span>
+      <span>{{ t("სირთულე", "Difficulty") }}</span>
+      <span>{{ t("ამოხსნები", "Acceptance") }}</span>
+      <span>XP</span>
+    </div>
+
+    {% if tasks %}
+      {% set offset = (pagination.page - 1) * 20 %}
+      {% for task in tasks %}
+        {% set solved = current_user.is_authenticated and task.submissions.filter_by(user_id=current_user.id, status='accepted').first() %}
+        <a href="{{ url_for('tasks.detail', task_id=task.id) }}" class="prob-row">
+
+          {# status icon #}
+          <div class="prob-row-status">
+            {% if solved %}
+              <span style="color:var(--easy)" title="{{ t('ამოხსნილი','Solved') }}">✓</span>
+            {% else %}
+              <span style="color:var(--border);font-size:.7rem">○</span>
+            {% endif %}
+          </div>
+
+          {# title #}
+          <div class="prob-row-title">
+            <span style="color:var(--muted);font-size:.78rem;margin-right:.5rem;font-family:'Space Mono',monospace">
+              #{{ offset + loop.index }}
+            </span>
+            {{ task.title }}
+          </div>
+
+          {# difficulty badge #}
+          <div>
+            <span class="prob-diff {{ task.difficulty }}">
+              <span class="prob-diff-dot"></span>
+              {% if task.difficulty == 'easy' %}{{ t("მარტივი","Easy") }}
+              {% elif task.difficulty == 'medium' %}{{ t("საშუალო","Medium") }}
+              {% else %}{{ t("რთული","Hard") }}{% endif %}
+            </span>
+          </div>
+
+          {# acceptance #}
+          <div class="prob-row-acc">
+            {{ task.solve_count() }}
+          </div>
+
+          {# xp #}
+          <div class="prob-row-xp">+{{ task.xp }} XP</div>
+
+        </a>
+      {% endfor %}
     {% else %}
-    <p class="muted-text" data-ka="ტასკები არ მოიძებნა." data-en="No tasks found.">ტასკები არ მოიძებნა.</p>
-    {% endfor %}
-  </div>
-</section>
+      <div class="prob-empty">
+        <div class="prob-empty-icon">🔍</div>
+        <p>{{ t("ამოცანები ვერ მოიძებნა.", "No problems found.") }}</p>
+      </div>
+    {% endif %}
+
+    {# ── PAGINATION ── #}
+    {% if pagination and pagination.pages > 1 %}
+    <div class="prob-pagination">
+      <div class="prob-pag-info">
+        {{ t("სულ", "Total") }} {{ pagination.total }} {{ t("ამოცანა", "problems") }}
+        · {{ t("გვერდი", "Page") }} {{ pagination.page }}/{{ pagination.pages }}
+      </div>
+      <div class="prob-pag-pages">
+        <a href="{{ url_for('tasks.index', difficulty=difficulty, q=search, page=pagination.prev_num) }}"
+           class="prob-pag-btn {% if not pagination.has_prev %}disabled{% endif %}">‹</a>
+
+        {% for p in pagination.iter_pages(left_edge=1, left_current=2, right_current=2, right_edge=1) %}
+          {% if p %}
+            <a href="{{ url_for('tasks.index', difficulty=difficulty, q=search, page=p) }}"
+               class="prob-pag-btn {% if p == pagination.page %}active{% endif %}">{{ p }}</a>
+          {% else %}
+            <span class="prob-pag-dots">…</span>
+          {% endif %}
+        {% endfor %}
+
+        <a href="{{ url_for('tasks.index', difficulty=difficulty, q=search, page=pagination.next_num) }}"
+           class="prob-pag-btn {% if not pagination.has_next %}disabled{% endif %}">›</a>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>{# /table-wrap #}
+
+</div>{# /prob-page #}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function applyFilters() {
+  const q    = document.getElementById('probSearch').value.trim();
+  const diff = '{{ difficulty }}';
+  let url = '{{ url_for("tasks.index") }}?';
+  if (diff) url += `difficulty=${diff}&`;
+  if (q)    url += `q=${encodeURIComponent(q)}&`;
+  window.location.href = url;
+}
+</script>
 {% endblock %}

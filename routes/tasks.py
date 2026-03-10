@@ -59,20 +59,27 @@ def detail(task_id):
 def submit(task_id):
     """
     Accepts JSON: { code: str, language: str }
-    Returns JSON: { ok: bool, xp_gained: int, message: str }
-    Currently uses placeholder judge logic — replace with real judge later.
+    Returns JSON: { ok, status, xp_gained, message, passed, total,
+                    runtime_ms, error_message, first_fail }
     """
     task = Task.query.get_or_404(task_id)
-    data = request.get_json(silent=True) or {}
-    code     = data.get("code", "")
-    language = data.get("language", "python")
+    data     = request.get_json(silent=True) or {}
+    code     = data.get("code", "").strip()
+    language = data.get("language", "python").lower()
 
-    # ── Placeholder judge ─────────────────────────────
-    # TODO: integrate real code execution (e.g., Judge0 API)
-    status     = "accepted"
-    runtime_ms = 42
+    if not code:
+        return jsonify({"ok": False, "status": "error",
+                        "message": "კოდი ცარიელია.", "xp_gained": 0}), 400
+
+    # ── Judge0 evaluation ────────────────────────────
+    from utils.judge import judge_task
+    result = judge_task(code, language, task)
     # ─────────────────────────────────────────────────
 
+    status     = result["status"]
+    runtime_ms = result["runtime_ms"]
+
+    # Save submission
     sub = Submission(
         user_id    = current_user.id,
         task_id    = task.id,
@@ -85,22 +92,38 @@ def submit(task_id):
     db.session.commit()
 
     xp_gained = 0
-    msg = ""
-
     if status == "accepted":
-        # Only award XP if this is the first accepted submission
-        already = Submission.query.filter_by(
+        first_accepted = Submission.query.filter_by(
             user_id=current_user.id, task_id=task.id, status="accepted"
         ).count()
-        if already == 1:
+        if first_accepted == 1:   # just saved above = first time
             current_user.add_xp(task.xp)
             xp_gained = task.xp
             _check_badges(current_user, task, runtime_ms)
-        msg = "სწორია! 🎉"
-    else:
-        msg = "შეცდომაა. სცადე ისევ."
 
-    return jsonify({"ok": status == "accepted", "xp_gained": xp_gained, "message": msg})
+    # Human-readable message (Georgian)
+    MSG = {
+        "accepted":            "სწორია! ყველა ტესტი გავიდა ✅",
+        "wrong_answer":        "არასწორი პასუხი ❌",
+        "compilation_error":   "კომპილაციის შეცდომა 🔧",
+        "time_limit_exceeded": "დრო ამოიწურა ⏱",
+        "runtime_error":       "Runtime შეცდომა 💥",
+        "memory_limit_exceeded": "მეხსიერება ამოიწურა 📦",
+        "internal_error":      "სერვერის შეცდომა, სცადე ხელახლა",
+        "error":               "Judge0 შეცდომა — შეამოწმე კონფიგი",
+    }
+
+    return jsonify({
+        "ok":            result["ok"],
+        "status":        status,
+        "xp_gained":     xp_gained,
+        "message":       MSG.get(status, status),
+        "passed":        result["passed"],
+        "total":         result["total"],
+        "runtime_ms":    runtime_ms,
+        "error_message": result.get("error_message", ""),
+        "first_fail":    result.get("first_fail"),
+    })
 
 
 @tasks_bp.route("/api/list")

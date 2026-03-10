@@ -1,7 +1,7 @@
 import os
 from datetime import timedelta
 
-# https://myaccount.google.com/apppasswords
+
 class Config:
     # ── Security ──────────────────────────────────────
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
@@ -13,7 +13,7 @@ class Config:
 
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "DATABASE_URL",
-        f"sqlite:///{os.path.join(_INSTANCE_DIR, 'codemama.db')}"
+        f"sqlite:///{os.path.join(_INSTANCE_DIR, 'codequest.db')}"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -25,9 +25,16 @@ class Config:
     MAIL_SERVER   = "smtp.gmail.com"
     MAIL_PORT     = 587
     MAIL_USE_TLS  = True
-    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "codemama@gmail.com")
-    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "kmzlrxhabaxiwhog")   # Gmail App Password აქ
-    MAIL_DEFAULT_SENDER = ("CodeMama", os.environ.get("MAIL_USERNAME", "codemama@gmail.com"))
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "bekabitarashvili@gmail.com")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")   # Gmail App Password აქ
+    MAIL_DEFAULT_SENDER = ("CodeQuest", os.environ.get("MAIL_USERNAME", "bekabitarashvili@gmail.com"))
+
+    # ── Judge0 Code Execution ────────────────────────────
+    # Free tier: https://rapidapi.com/judge0-official/api/judge0-ce
+    # Self-host: https://github.com/judge0/judge0
+    JUDGE0_URL     = os.environ.get("JUDGE0_URL",     "https://judge0-ce.p.rapidapi.com")
+    JUDGE0_API_KEY = os.environ.get("JUDGE0_API_KEY", "")   # ← RapidAPI key აქ
+    JUDGE0_HOST    = os.environ.get("JUDGE0_HOST",    "judge0-ce.p.rapidapi.com")
 
     # ── Token expiry ──────────────────────────────────
     EMAIL_TOKEN_MAX_AGE = 3600   # 1 საათი (წამებში)

@@ -54,24 +54,7 @@ def create_app(config_class=Config):
 def _seed_initial_data():
     from models import Task, Badge, News
 
-    if not Task.query.first():
-        tasks = [
-            Task(title="Fibonacci Sequence",     difficulty="easy",   xp=30,  description="ააგე ფიბონაჩის მიმდევრობა n წევრამდე."),
-            Task(title="Palindrome Check",        difficulty="easy",   xp=25,  description="განსაზღვრე, არის თუ არა სტრინგი პალინდრომი."),
-            Task(title="FizzBuzz",                difficulty="easy",   xp=20,  description="კლასიკური FizzBuzz ამოცანა."),
-            Task(title="Sum of Array",            difficulty="easy",   xp=25,  description="მასივის ელემენტების ჯამი."),
-            Task(title="Reverse String",          difficulty="easy",   xp=20,  description="სტრინგის შებრუნება."),
-            Task(title="Binary Search Tree",      difficulty="medium", xp=80,  description="BST-ის კვანძის ჩასმა/ძებნა."),
-            Task(title="Graph BFS / DFS",         difficulty="medium", xp=90,  description="გრაფში სიგანე/სიღრმე-პირველი ძებნა."),
-            Task(title="Stack with Min",          difficulty="medium", xp=70,  description="Stack, რომელიც O(1)-ში აბრუნებს მინიმუმს."),
-            Task(title="LRU Cache",               difficulty="medium", xp=85,  description="LRU Cache-ის იმპლემენტაცია."),
-            Task(title="Merge Intervals",         difficulty="medium", xp=75,  description="გადამფარავი ინტერვალების გაერთიანება."),
-            Task(title="Dynamic Programming #3",  difficulty="hard",   xp=150, description="Longest Common Subsequence."),
-            Task(title="Network Flow",            difficulty="hard",   xp=180, description="Max-Flow Min-Cut თეორემა."),
-            Task(title="Segment Tree",            difficulty="hard",   xp=160, description="Segment Tree დიაპაზონური შეკითხვებისთვის."),
-            Task(title="Dijkstra + Heap",         difficulty="hard",   xp=170, description="დეიქსტრას ალგორითმი heap-ით."),
-            Task(title="Edit Distance DP",        difficulty="hard",   xp=155, description="Levenshtein Distance DP."),
-        ]
+    if not Badge.query.first():
         badges = [
             Badge(slug="first_blood",  name_ka="პირველი სისხლი",           name_en="First Blood",   emoji="🩸", description_ka="პირველი ამოხსნა",      description_en="First solve"),
             Badge(slug="warrior_7",    name_ka="7 დღის მეომარი",           name_en="7 Day Warrior", emoji="⚔️", description_ka="7 დღე streak",         description_en="7 day streak"),
@@ -84,7 +67,7 @@ def _seed_initial_data():
             Badge(slug="top10",        name_ka="ტოპ 10",                   name_en="Top 10",        emoji="🌟", description_ka="ლიდერბორდი Top 10",   description_en="Leaderboard Top 10"),
             Badge(slug="on_fire",      name_ka="ცეცხლზეა",                name_en="On Fire",       emoji="🔥", description_ka="30 დღის streak",       description_en="30 day streak"),
         ]
-        db.session.add_all(tasks + badges)
+        db.session.add_all(badges)
         db.session.commit()
 
     if not News.query.first():

@@ -117,18 +117,38 @@ def load_user(user_id):
 #  Task
 # ─────────────────────────────────────────────────────────
 class Task(db.Model):
-    id          = db.Column(db.Integer, primary_key=True)
-    title       = db.Column(db.String(128), nullable=False)
-    difficulty  = db.Column(db.String(16),  nullable=False)
-    xp          = db.Column(db.Integer,     default=30)
-    description = db.Column(db.Text,        nullable=True)
-    created_at  = db.Column(db.DateTime,    default=datetime.utcnow)
-    is_active   = db.Column(db.Boolean,     default=True)
+    id           = db.Column(db.Integer, primary_key=True)
+    title        = db.Column(db.String(128), nullable=False)
+    difficulty   = db.Column(db.String(16),  nullable=False)
+    xp           = db.Column(db.Integer,     default=30)
+    # Full problem statement (Markdown supported)
+    description  = db.Column(db.Text,        nullable=True)
+    # JSON array: [{"input": "...", "output": "...", "explanation": "..."}]
+    # First 2 are shown to user, rest are hidden judge tests
+    test_cases   = db.Column(db.Text,        nullable=True)
+    # Limits
+    time_limit   = db.Column(db.Float,       default=2.0)    # seconds
+    memory_limit = db.Column(db.Integer,     default=256)    # MB
+    # Category tag e.g. "Math", "DP", "Greedy", "Strings"
+    category     = db.Column(db.String(64),  nullable=True)
+    created_at   = db.Column(db.DateTime,    default=datetime.utcnow)
+    is_active    = db.Column(db.Boolean,     default=True)
 
-    submissions = db.relationship("Submission", backref="task", lazy="dynamic")
+    submissions  = db.relationship("Submission", backref="task", lazy="dynamic")
 
     def solve_count(self):
         return self.submissions.filter_by(status="accepted").count()
+
+    def get_test_cases(self):
+        import json
+        try:
+            return json.loads(self.test_cases or "[]")
+        except Exception:
+            return []
+
+    def get_visible_tests(self):
+        """First 2 test cases shown to user as examples."""
+        return self.get_test_cases()[:2]
 
     def __repr__(self):
         return f"<Task {self.title} [{self.difficulty}]>"

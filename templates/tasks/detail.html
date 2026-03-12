@@ -1,85 +1,473 @@
 {% extends "base.html" %}
-{% block title %}{{ task.title }}{% endblock %}
+{% block title %}{{ task.get_title(lang) }}{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --easy:      #00b8a3;  --easy-bg:   #00b8a314;  --easy-br:   #00b8a330;
+  --medium:    #ffc01e;  --medium-bg: #ffc01e14;  --medium-br: #ffc01e30;
+  --hard:      #ff375f;  --hard-bg:   #ff375f14;  --hard-br:   #ff375f30;
+}
+
+.td-page {
+  max-width: 1300px; margin: 0 auto;
+  padding: calc(70px + 2rem) clamp(1rem,3vw,2rem) 5rem;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 2rem; align-items: start;
+}
+
+/* ── BACK LINK ── */
+.td-back {
+  display: inline-flex; align-items: center; gap: .5rem;
+  color: var(--muted); text-decoration: none;
+  font-size: .88rem; font-weight: 600;
+  margin-bottom: 1.6rem;
+  transition: color .2s, gap .15s;
+}
+.td-back:hover { color: var(--orange); gap: .8rem; }
+
+/* ── TITLE ROW ── */
+.td-title-row {
+  display: flex; align-items: flex-start;
+  gap: 1rem; flex-wrap: wrap; margin-bottom: 1.2rem;
+}
+.td-title {
+  font-size: clamp(1.3rem, 3vw, 1.9rem);
+  font-weight: 900; line-height: 1.2; flex: 1;
+}
+
+/* difficulty badge */
+.td-diff {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 14px; border-radius: 10px;
+  font-size: .8rem; font-weight: 800; flex-shrink: 0;
+  border: 1px solid;
+}
+.td-diff.easy   { color:var(--easy);   background:var(--easy-bg);   border-color:var(--easy-br); }
+.td-diff.medium { color:var(--medium); background:var(--medium-bg); border-color:var(--medium-br); }
+.td-diff.hard   { color:var(--hard);   background:var(--hard-bg);   border-color:var(--hard-br); }
+.td-diff-dot { width:7px;height:7px;border-radius:50%;background:currentColor; }
+
+/* ── META CHIPS ── */
+.td-meta { display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.8rem; }
+.td-chip {
+  display:inline-flex;align-items:center;gap:4px;
+  padding:4px 12px;border-radius:8px;font-size:.78rem;font-weight:700;
+  background:var(--bg3);border:1px solid var(--border);color:var(--muted);
+}
+.td-chip.xp     { color:var(--orange);background:var(--orange)12;border-color:var(--orange)33; }
+.td-chip.solved { color:var(--easy);background:var(--easy-bg);border-color:var(--easy-br); }
+
+/* ── CARD BASE ── */
+.td-card {
+  background:var(--card);border:1px solid var(--border);
+  border-radius:18px;overflow:hidden;margin-bottom:1.4rem;
+  backdrop-filter:blur(12px);
+}
+.td-card-head {
+  padding:.75rem 1.4rem;border-bottom:1px solid var(--border);
+  font-size:.7rem;font-weight:800;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);
+  display:flex;align-items:center;gap:.5rem;
+}
+
+/* ── STATEMENT BODY ── */
+.td-stmt-body {
+  padding:1.6rem 1.8rem;
+  font-size:.94rem;line-height:1.9;color:var(--muted);
+}
+.td-stmt-body h2 {
+  font-size:1.1rem;font-weight:900;color:var(--text);
+  margin:0 0 .9rem;
+}
+.td-stmt-body p  { margin:0 0 .8rem; }
+.td-stmt-body p:last-child { margin-bottom:0; }
+.td-stmt-body strong { color:var(--text);font-weight:700; }
+.td-stmt-body em { color:var(--orange); }
+.td-stmt-body code {
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:5px;padding:2px 7px;
+  font-family:'Space Mono',monospace;font-size:.86em;
+  color:var(--orange);
+}
+/* highlight input/output lines */
+.td-io-inline {
+  background:var(--bg3);border-left:3px solid var(--orange);
+  border-radius:0 8px 8px 0;
+  padding:.5rem 1rem;margin:.5rem 0;
+  font-size:.88rem;
+}
+.td-io-inline strong { color:var(--orange); }
+
+/* ── EXAMPLES ── */
+.td-example { padding:1.1rem 1.4rem;border-bottom:1px solid var(--border)55; }
+.td-example:last-child { border-bottom:none; }
+.td-ex-label {
+  font-size:.68rem;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--orange);margin-bottom:.7rem;
+}
+.td-ex-grid { display:grid;grid-template-columns:1fr 1fr;gap:.7rem; }
+.td-io-lbl  { font-size:.67rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.3rem; }
+.td-io-pre  {
+  background:#0d0f17;border:1px solid var(--border);
+  border-radius:9px;padding:.65rem 1rem;
+  font-family:'Space Mono',monospace;font-size:.83rem;
+  color:#e2e8f0;white-space:pre;overflow-x:auto;min-height:34px;
+}
+.td-ex-note { grid-column:1/-1;margin-top:.4rem;font-size:.82rem;color:var(--muted);font-style:italic; }
+
+/* ── LIMITS ROW ── */
+.td-limits { display:flex;gap:1.2rem;flex-wrap:wrap;padding:.85rem 1.4rem;border-top:1px solid var(--border); }
+.td-lim { display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--muted); }
+.td-lim strong { color:var(--text); }
+
+/* ══════════ EDITOR PANEL ══════════ */
+.td-right { position:sticky;top:calc(70px + 1rem); }
+.td-editor-card {
+  background:var(--card);border:1px solid var(--border);
+  border-radius:18px;overflow:hidden;
+}
+
+/* toolbar */
+.td-toolbar {
+  display:flex;align-items:center;gap:.6rem;
+  padding:.65rem 1rem;border-bottom:1px solid var(--border);
+  background:var(--bg3);
+}
+.td-dots { display:flex;gap:5px; }
+.td-dot  { width:11px;height:11px;border-radius:50%; }
+.td-dot:nth-child(1){background:#ff5f56}
+.td-dot:nth-child(2){background:#ffbd2e}
+.td-dot:nth-child(3){background:#27c93f}
+
+.td-lang {
+  margin-left:auto;
+  background:var(--card);border:1px solid var(--border);
+  color:var(--text);font-size:.82rem;
+  padding:5px 10px;border-radius:8px;
+  font-family:'Outfit',sans-serif;cursor:pointer;
+}
+
+/* textarea */
+.td-code {
+  width:100%;min-height:340px;max-height:520px;
+  background:#0d0f17;color:#e2e8f0;
+  border:none;outline:none;resize:vertical;
+  font-family:'Space Mono','Fira Code',monospace;
+  font-size:.87rem;line-height:1.75;
+  padding:1.1rem;tab-size:4;box-sizing:border-box;
+}
+
+/* result */
+.td-result { display:none;margin:0 1rem 1rem;border-radius:12px;border:1px solid var(--border);overflow:hidden; }
+.td-res-hdr {
+  padding:.7rem 1rem;display:flex;align-items:center;gap:.5rem;
+  font-size:.88rem;font-weight:800;
+}
+.td-result.ok    .td-res-hdr { background:#00b8a318;border-bottom:1px solid var(--easy-br);color:var(--easy); }
+.td-result.wrong .td-res-hdr { background:var(--hard-bg);border-bottom:1px solid var(--hard-br);color:var(--hard); }
+.td-result.warn  .td-res-hdr { background:var(--medium-bg);border-bottom:1px solid var(--medium-br);color:var(--medium); }
+.td-res-body { padding:.8rem 1rem;font-size:.84rem;color:var(--muted); }
+.td-res-body pre {
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:8px;padding:.6rem .9rem;
+  font-family:'Space Mono',monospace;font-size:.8rem;
+  overflow-x:auto;white-space:pre-wrap;color:var(--text);margin:.35rem 0 0;
+}
+.td-res-lbl { font-size:.7rem;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.07em; }
+.td-res-grid { display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem; }
+
+/* submit bar */
+.td-sub-bar {
+  padding:.85rem 1.1rem;border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:.7rem;
+}
+.td-btn-clear {
+  padding:9px 18px;border-radius:10px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);
+  font-size:.85rem;font-weight:700;font-family:'Outfit',sans-serif;
+  cursor:pointer;transition:all .18s;
+}
+.td-btn-clear:hover { border-color:var(--orange)44;color:var(--text); }
+.td-btn-submit {
+  margin-left:auto;padding:10px 26px;border-radius:10px;border:none;
+  background:var(--orange);color:#fff;
+  font-size:.9rem;font-weight:800;font-family:'Outfit',sans-serif;
+  cursor:pointer;transition:opacity .18s,transform .18s;
+  display:flex;align-items:center;gap:.4rem;
+}
+.td-btn-submit:hover:not(:disabled) { opacity:.88;transform:translateY(-1px); }
+.td-btn-submit:disabled { opacity:.5;cursor:not-allowed; }
+
+/* XP popup */
+.td-xp-pop {
+  position:fixed;top:5rem;right:2rem;z-index:9999;
+  background:var(--orange);color:#fff;
+  padding:.8rem 1.6rem;border-radius:14px;
+  font-size:1.1rem;font-weight:900;
+  box-shadow:0 12px 32px var(--orange)44;
+  animation:xpIn .4s cubic-bezier(.2,.8,.3,1.2) forwards;
+  pointer-events:none;
+}
+@keyframes xpIn {
+  from{transform:scale(.5) translateY(20px);opacity:0}
+  to  {transform:scale(1)  translateY(0);   opacity:1}
+}
+
+@media(max-width:960px){
+  .td-page{grid-template-columns:1fr;}
+  .td-right{position:static;}
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<section class="section-pad">
-  <div style="margin-bottom:1.5rem">
-    <a href="{{ url_for('tasks.index', difficulty=task.difficulty) }}" class="back-link">← <span data-ka="უკან" data-en="Back">უკან</span></a>
+<div class="td-page">
+
+{# ═══════════════ LEFT — PROBLEM ═══════════════ #}
+<div class="td-left">
+
+  <a href="{{ url_for('tasks.index') }}" class="td-back">
+    ← {{ t("ამოცანებზე დაბრუნება","Back to Problems") }}
+  </a>
+
+  {# Title + diff #}
+  <div class="td-title-row">
+    <h1 class="td-title">{{ task.get_title(lang) }}</h1>
+    <span class="td-diff {{ task.difficulty }}">
+      <span class="td-diff-dot"></span>
+      {% if task.difficulty == 'easy'   %}{{ t("მარტივი","Easy") }}
+      {% elif task.difficulty == 'medium' %}{{ t("საშუალო","Medium") }}
+      {% else %}{{ t("რთული","Hard") }}{% endif %}
+    </span>
   </div>
 
-  <div class="tasks-detail-grid">
-    <div>
-      <div class="diff-chip diff-chip--{{ task.difficulty }}">{{ task.difficulty }}</div>
-      <h1 style="font-size:2rem;font-weight:900;margin:.7rem 0">{{ task.title }}</h1>
-      <p style="color:var(--muted);line-height:1.7;margin-bottom:2rem">{{ task.description }}</p>
+  {# Meta #}
+  <div class="td-meta">
+    <span class="td-chip xp">⚡ +{{ task.xp }} XP</span>
+    <span class="td-chip">👥 {{ task.solve_count() }} {{ t("ამოხსნა","solves") }}</span>
+    {% if task.get_category(lang) %}
+    <span class="td-chip">🏷 {{ task.get_category(lang) }}</span>
+    {% endif %}
+    {% if user_solved %}
+    <span class="td-chip solved">✓ {{ t("ამოხსნილია","Solved") }}</span>
+    {% endif %}
+  </div>
 
-      <div style="display:flex;gap:1rem;margin-bottom:2rem">
-        <div class="prize-chip">⚡ +{{ task.xp }} XP</div>
-        <div class="prize-chip">👥 {{ task.solve_count() }} <span data-ka="ამოხსნა" data-en="solves">ამოხსნა</span></div>
+  {# Statement card #}
+  <div class="td-card">
+    <div class="td-card-head">📄 {{ t("პირობა","Problem Statement") }}</div>
+    <div class="td-stmt-body">
+      {% set desc = task.get_description(lang) %}
+      {% if desc %}
+        {% for line in desc.split('\n') %}
+          {% set s = line.strip() %}
+          {% if s.startswith('## ') %}
+            <h2>{{ s[3:] }}</h2>
+          {% elif s.startswith('**') and ('შეყვანა' in s or 'გამოტანა' in s or 'Input' in s or 'Output' in s) %}
+            <div class="td-io-inline">{{ s | replace('**','') }}</div>
+          {% elif s %}
+            <p>{{ s }}</p>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <p>{{ t("აღწერა არ არის.","No description available.") }}</p>
+      {% endif %}
+    </div>
+    {# Limits inside the card #}
+    <div class="td-limits">
+      <div class="td-lim">⏱ {{ t("დრო","Time Limit") }}: <strong>{{ task.time_limit }}s</strong></div>
+      <div class="td-lim">💾 {{ t("მეხსიერება","Memory") }}: <strong>{{ task.memory_limit }} MB</strong></div>
+    </div>
+  </div>
+
+  {# Examples card #}
+  {% set vis = task.get_visible_tests() %}
+  {% if vis %}
+  <div class="td-card">
+    <div class="td-card-head">🧪 {{ t("მაგალითები","Examples") }}</div>
+    {% for tc in vis %}
+    <div class="td-example">
+      <div class="td-ex-label">{{ t("მაგალითი","Example") }} {{ loop.index }}</div>
+      <div class="td-ex-grid">
+        <div>
+          <div class="td-io-lbl">{{ t("შეყვანა","Input") }}</div>
+          <div class="td-io-pre">{{ tc.input }}</div>
+        </div>
+        <div>
+          <div class="td-io-lbl">{{ t("გამოტანა","Output") }}</div>
+          <div class="td-io-pre">{{ tc.output }}</div>
+        </div>
+        {% set note = tc.get('explanation_ka','') if lang=='ka' else tc.get('explanation_en', tc.get('explanation','')) %}
+        {% if note %}<div class="td-ex-note">💡 {{ note }}</div>{% endif %}
       </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 
-      {% if user_solved %}
-        <div class="solved-banner">✅ <span data-ka="ამოხსნილია!" data-en="Solved!">ამოხსნილია!</span></div>
+</div>{# /td-left #}
+
+{# ═══════════════ RIGHT — EDITOR ═══════════════ #}
+<div class="td-right">
+  <div class="td-editor-card">
+
+    <div class="td-toolbar">
+      <div class="td-dots">
+        <div class="td-dot"></div><div class="td-dot"></div><div class="td-dot"></div>
+      </div>
+      <select id="langSel" class="td-lang">
+        <option value="python">Python 3</option>
+        <option value="javascript">JavaScript</option>
+        <option value="cpp">C++</option>
+        <option value="java">Java</option>
+      </select>
+    </div>
+
+    <textarea id="codeArea" class="td-code"
+      placeholder="{{ t('# კოდი აქ...','# Write your solution here...') }}"
+      spellcheck="false"></textarea>
+
+    <div id="tdResult" class="td-result">
+      <div class="td-res-hdr" id="tdResHdr"></div>
+      <div class="td-res-body" id="tdResBody"></div>
+    </div>
+
+    <div class="td-sub-bar">
+      <button class="td-btn-clear" onclick="document.getElementById('codeArea').value=''">
+        {{ t("გასუფთავება","Clear") }}
+      </button>
+      {% if current_user.is_authenticated %}
+        <button class="td-btn-submit" id="subBtn" onclick="doSubmit({{ task.id }})">
+          {{ t("გაგზავნა","Submit") }} <span>→</span>
+        </button>
+      {% else %}
+        <button class="td-btn-submit" onclick="openModal('login')">
+          {{ t("შედი და გაგზავნე","Login to Submit") }} →
+        </button>
       {% endif %}
     </div>
 
-    {# Code editor area #}
-    <div class="editor-card">
-      <div class="terminal-bar" style="border-radius:var(--radius) var(--radius) 0 0">
-        <div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div>
-        <select id="langSelect" style="margin-left:auto;background:var(--bg3);border:none;color:var(--muted);font-size:.8rem;padding:2px 6px;border-radius:4px">
-          <option value="python">Python</option>
-          <option value="javascript">JavaScript</option>
-          <option value="cpp">C++</option>
-          <option value="java">Java</option>
-        </select>
-      </div>
-      <textarea id="codeEditor" class="code-editor" placeholder="# კოდი აქ...&#10;def solution():&#10;    pass" spellcheck="false"></textarea>
-      <div style="padding:1rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:.8rem">
-        <button class="btn-ghost" onclick="clearEditor()" data-ka="გასუფთავება" data-en="Clear">გასუფთავება</button>
-        {% if current_user.is_authenticated %}
-          <button class="btn-primary" id="submitBtn" onclick="submitSolution({{ task.id }})" data-ka="გაგზავნა" data-en="Submit">გაგზავნა</button>
-        {% else %}
-          <button class="btn-primary" onclick="openModal('login')" data-ka="შედი და გაგზავნე" data-en="Login to Submit">შედი და გაგზავნე</button>
-        {% endif %}
-      </div>
-      <div id="submitResult" style="padding:0 1rem 1rem;font-size:.9rem;display:none"></div>
-    </div>
   </div>
-</section>
+</div>{# /td-right #}
+
+</div>{# /td-page #}
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function clearEditor() { document.getElementById('codeEditor').value = ''; }
+const _L = "{{ lang }}";
+const _M = {
+  ka: {
+    accepted:            "✅ სწორია! ყველა ტესტი გავიდა",
+    wrong_answer:        "❌ არასწორი პასუხი",
+    compilation_error:   "🔧 კომპილაციის შეცდომა",
+    time_limit_exceeded: "⏱ დრო ამოიწურა",
+    runtime_error:       "💥 Runtime შეცდომა",
+    internal_error:      "⚠️ სერვერის შეცდომა",
+    error:               "⚠️ Judge შეცდომა",
+    tests: "ტესტები", test: "ტესტი",
+    input: "შეყვანა", expected: "მოსალოდნელი", got: "შენი პასუხი", err: "შეცდომა",
+    judging: "⏳ მოწმდება...", submit: "გაგზავნა",
+  },
+  en: {
+    accepted:            "✅ Accepted! All tests passed",
+    wrong_answer:        "❌ Wrong Answer",
+    compilation_error:   "🔧 Compilation Error",
+    time_limit_exceeded: "⏱ Time Limit Exceeded",
+    runtime_error:       "💥 Runtime Error",
+    internal_error:      "⚠️ Internal Error",
+    error:               "⚠️ Judge Error",
+    tests: "Tests", test: "Test",
+    input: "Input", expected: "Expected", got: "Your Output", err: "Error",
+    judging: "⏳ Judging...", submit: "Submit",
+  }
+};
+const m = _M[_L] || _M.en;
 
-async function submitSolution(taskId) {
-  const btn = document.getElementById('submitBtn');
-  const code = document.getElementById('codeEditor').value;
-  const lang = document.getElementById('langSelect').value;
-  const res  = document.getElementById('submitResult');
+async function doSubmit(taskId) {
+  const btn  = document.getElementById('subBtn');
+  const code = document.getElementById('codeArea').value.trim();
+  const lang = document.getElementById('langSel').value;
+  const res  = document.getElementById('tdResult');
+  const hdr  = document.getElementById('tdResHdr');
+  const body = document.getElementById('tdResBody');
 
-  btn.disabled = true;
-  btn.textContent = '⏳ ...';
+  if (!code) return;
+  btn.disabled    = true;
+  btn.innerHTML   = m.judging;
   res.style.display = 'none';
 
   try {
-    const r = await fetch(`/tasks/${taskId}/submit`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ code, language: lang }),
+    const r  = await fetch(`/tasks/${taskId}/submit`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({code, language: lang})
     });
-    const data = await r.json();
+    const d = await r.json();
+
     res.style.display = 'block';
-    res.style.color = data.ok ? '#4caf50' : '#f44336';
-    res.textContent = data.message;
-    if(data.ok && data.xp_gained > 0) showXP(`+${data.xp_gained} XP`);
+    const cls = d.status==='accepted' ? 'ok'
+              : d.status==='time_limit_exceeded' ? 'warn'
+              : 'wrong';
+    res.className = 'td-result ' + cls;
+    hdr.textContent = m[d.status] || d.message;
+
+    let html = `<div style="margin-bottom:.5rem">
+      <span class="td-res-lbl">${m.tests}:</span>
+      <strong style="color:var(--text);margin-left:.3rem">${d.passed}/${d.total}</strong>
+    </div>`;
+
+    if (d.first_fail) {
+      const ff = d.first_fail;
+      html += `<div style="margin-top:.5rem">
+        <span class="td-res-lbl">${m.test} #${ff.test_num}</span>
+        <div class="td-res-grid">
+          <div><div class="td-res-lbl">${m.input}</div><pre>${esc(ff.input)}</pre></div>
+          <div><div class="td-res-lbl">${m.expected}</div><pre>${esc(ff.expected)}</pre></div>
+        </div>
+        <div style="margin-top:.4rem">
+          <div class="td-res-lbl">${m.got}</div><pre>${esc(ff.got)}</pre>
+        </div>
+      </div>`;
+    }
+    if (d.error_message) {
+      html += `<div style="margin-top:.5rem">
+        <div class="td-res-lbl">${m.err}</div><pre>${esc(d.error_message)}</pre>
+      </div>`;
+    }
+    body.innerHTML = html;
+
+    if (d.ok && d.xp_gained > 0) {
+      const el = document.createElement('div');
+      el.className   = 'td-xp-pop';
+      el.textContent = `+${d.xp_gained} XP 🎉`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
   } catch(e) {
     res.style.display = 'block';
-    res.textContent = 'კავშირის შეცდომა.';
+    res.className = 'td-result wrong';
+    hdr.textContent = '⚠️ Connection error';
+    body.innerHTML  = '';
   }
-  btn.disabled = false;
-  btn.textContent = 'გაგზავნა';
+
+  btn.disabled  = false;
+  btn.innerHTML = m.submit + ' <span>→</span>';
 }
+
+function esc(s) {
+  return String(s||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Tab key support
+document.getElementById('codeArea').addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return;
+  e.preventDefault();
+  const t = e.target, s = t.selectionStart;
+  t.value = t.value.slice(0,s) + '    ' + t.value.slice(t.selectionEnd);
+  t.selectionStart = t.selectionEnd = s + 4;
+});
 </script>
 {% endblock %}

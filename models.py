@@ -117,22 +117,20 @@ def load_user(user_id):
 #  Task
 # ─────────────────────────────────────────────────────────
 class Task(db.Model):
-    id           = db.Column(db.Integer, primary_key=True)
-    title        = db.Column(db.String(128), nullable=False)
-    difficulty   = db.Column(db.String(16),  nullable=False)
-    xp           = db.Column(db.Integer,     default=30)
-    # Full problem statement (Markdown supported)
-    description  = db.Column(db.Text,        nullable=True)
-    # JSON array: [{"input": "...", "output": "...", "explanation": "..."}]
-    # First 2 are shown to user, rest are hidden judge tests
-    test_cases   = db.Column(db.Text,        nullable=True)
-    # Limits
-    time_limit   = db.Column(db.Float,       default=2.0)    # seconds
-    memory_limit = db.Column(db.Integer,     default=256)    # MB
-    # Category tag e.g. "Math", "DP", "Greedy", "Strings"
-    category     = db.Column(db.String(64),  nullable=True)
-    created_at   = db.Column(db.DateTime,    default=datetime.utcnow)
-    is_active    = db.Column(db.Boolean,     default=True)
+    id             = db.Column(db.Integer, primary_key=True)
+    title_ka       = db.Column(db.String(128), nullable=False)
+    title_en       = db.Column(db.String(128), nullable=False)
+    difficulty     = db.Column(db.String(16),  nullable=False)
+    xp             = db.Column(db.Integer,     default=30)
+    description_ka = db.Column(db.Text,        nullable=True)
+    description_en = db.Column(db.Text,        nullable=True)
+    test_cases     = db.Column(db.Text,        nullable=True)
+    time_limit     = db.Column(db.Float,       default=2.0)
+    memory_limit   = db.Column(db.Integer,     default=256)
+    category_ka    = db.Column(db.String(64),  nullable=True)
+    category_en    = db.Column(db.String(64),  nullable=True)
+    created_at     = db.Column(db.DateTime,    default=datetime.utcnow)
+    is_active      = db.Column(db.Boolean,     default=True)
 
     submissions  = db.relationship("Submission", backref="task", lazy="dynamic")
 
@@ -147,11 +145,23 @@ class Task(db.Model):
             return []
 
     def get_visible_tests(self):
-        """First 2 test cases shown to user as examples."""
-        return self.get_test_cases()[:2]
+        return [tc for tc in self.get_test_cases() if not tc.get("hidden")][:2]
+
+    def get_title(self, lang="ka"):
+        return self.title_ka if lang == "ka" else (self.title_en or self.title_ka)
+
+    def get_description(self, lang="ka"):
+        if lang == "ka":
+            return self.description_ka or ""
+        return self.description_en or self.description_ka or ""
+
+    def get_category(self, lang="ka"):
+        if lang == "ka":
+            return self.category_ka or self.category_en or ""
+        return self.category_en or self.category_ka or ""
 
     def __repr__(self):
-        return f"<Task {self.title} [{self.difficulty}]>"
+        return f"<Task {self.title_ka} [{self.difficulty}]>"
 
 
 # ─────────────────────────────────────────────────────────

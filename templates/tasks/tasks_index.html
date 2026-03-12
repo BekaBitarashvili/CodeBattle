@@ -335,7 +335,7 @@
             <span style="color:var(--muted);font-size:.78rem;margin-right:.5rem;font-family:'Space Mono',monospace">
               #{{ offset + loop.index }}
             </span>
-            {{ task.title }}
+            {{ task.title_ka if lang == 'ka' else task.title_en }}
           </div>
 
           {# difficulty badge #}

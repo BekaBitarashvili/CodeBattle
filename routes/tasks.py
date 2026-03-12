@@ -19,7 +19,11 @@ def index():
     if difficulty in ("easy", "medium", "hard"):
         q = q.filter_by(difficulty=difficulty)
     if search:
-        q = q.filter(Task.title.ilike(f"%{search}%"))
+        from sqlalchemy import or_
+        q = q.filter(or_(
+            Task.title_ka.ilike(f"%{search}%"),
+            Task.title_en.ilike(f"%{search}%")
+        ))
 
     # difficulty ordering: easy < medium < hard
     diff_order = db.case(
@@ -33,7 +37,7 @@ def index():
     easy_count   = Task.query.filter_by(is_active=True, difficulty="easy").count()
     medium_count = Task.query.filter_by(is_active=True, difficulty="medium").count()
     hard_count   = Task.query.filter_by(is_active=True, difficulty="hard").count()
-    return render_template("tasks/index.html",
+    return render_template("tasks/tasks_index.html",
                            tasks=pagination.items,
                            pagination=pagination,
                            difficulty=difficulty,
@@ -131,8 +135,14 @@ def api_list():
     """JSON endpoint for dynamic filtering on frontend."""
     difficulty = request.args.get("difficulty", "easy")
     tasks = Task.query.filter_by(difficulty=difficulty, is_active=True).all()
+    from flask import session as flask_session
+    lang = flask_session.get("lang", "ka")
     return jsonify([
-        {"id": t.id, "title": t.title, "xp": t.xp, "difficulty": t.difficulty,
+        {"id": t.id,
+         "title": t.get_title(lang),
+         "xp": t.xp,
+         "difficulty": t.difficulty,
+         "category": t.get_category(lang),
          "solves": t.solve_count()}
         for t in tasks
     ])

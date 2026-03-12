@@ -2,6 +2,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
+print(f"[CONFIG] MAIL_USERNAME={repr(os.environ.get('MAIL_USERNAME'))}", flush=True)
+print(f"[CONFIG] MAIL_PASSWORD={'SET' if os.environ.get('MAIL_PASSWORD') else 'EMPTY'}", flush=True)
+
+import os
 from datetime import timedelta
 
 

@@ -91,7 +91,13 @@ def register():
         token   = generate_register_token(email, username, pw_hash)
         verify_url = url_for("auth.verify_email", token=token, _external=True)
 
+        # ok, err_msg = send_verification_email(email, username, verify_url)
+        #
+        # if not ok:
+        import sys
+        print(f"[REG] Sending to: {email}", flush=True, file=sys.stderr)
         ok, err_msg = send_verification_email(email, username, verify_url)
+        print(f"[REG] ok={ok} err={err_msg}", flush=True, file=sys.stderr)
 
         if not ok:
             error = "მეილის გაგზავნა ვერ მოხერხდა. სცადეთ მოგვიანებით."

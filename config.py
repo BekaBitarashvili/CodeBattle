@@ -10,7 +10,7 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
 
     # ── Database ──────────────────────────────────────
-    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+    BASE_DIR      = os.path.abspath(os.path.dirname(__file__))
     _INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
     os.makedirs(_INSTANCE_DIR, exist_ok=True)
 
@@ -24,10 +24,9 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)
     REMEMBER_COOKIE_DURATION   = timedelta(days=30)
 
-    # ── Resend Email API ──────────────────────────────
-    RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "re_fPxsVDJy_G23ZpRM9RSqXNRHRnHcGEVd8")
-    MAIL_FROM      = os.environ.get("MAIL_FROM",      "onboarding@resend.dev")
-    MAIL_FROM_NAME = os.environ.get("MAIL_FROM_NAME", "CodeMama")
+    # ── Gmail SMTP ────────────────────────────────────
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
 
     # ── Judge0 Code Execution ─────────────────────────
     JUDGE0_URL     = os.environ.get("JUDGE0_URL",     "https://judge0-ce.p.rapidapi.com")
@@ -38,12 +37,12 @@ class Config:
     EMAIL_TOKEN_MAX_AGE = 3600
 
     # ── App-specific ──────────────────────────────────
-    LANGUAGES         = ["ka", "en"]
-    DEFAULT_LANGUAGE  = "ka"
-    XP_PER_EASY       = 30
-    XP_PER_MEDIUM     = 80
-    XP_PER_HARD       = 150
-    STREAK_BONUS_XP   = 10
+    LANGUAGES        = ["ka", "en"]
+    DEFAULT_LANGUAGE = "ka"
+    XP_PER_EASY      = 30
+    XP_PER_MEDIUM    = 80
+    XP_PER_HARD      = 150
+    STREAK_BONUS_XP  = 10
 
 
 class DevelopmentConfig(Config):

@@ -1,53 +1,53 @@
 """
-Email sending via Resend API.
-https://resend.com — free 3000 emails/month, no SMTP ports needed.
-
-Config (set in environment variables on Render):
-  RESEND_API_KEY = re_xxxxxxxxxxxx
-  MAIL_FROM      = onboarding@resend.dev   (ან შენი დომენი)
-  MAIL_FROM_NAME = CodeMama
+Email sending via Gmail SMTP.
+Config (set in .env or Render environment):
+  MAIL_USERNAME = c0d3mama@gmail.com
+  MAIL_PASSWORD = xxxx xxxx xxxx xxxx  (Gmail App Password)
 """
-import json
-import urllib.request
-import urllib.error
-import requests as _requests
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from flask import current_app
 
 
 def _send(to_email: str, subject: str, html: str) -> tuple[bool, str]:
-    api_key   = current_app.config.get("RESEND_API_KEY", "")
-    from_addr = current_app.config.get("MAIL_FROM", "onboarding@resend.dev")
-    from_name = current_app.config.get("MAIL_FROM_NAME", "CodeMama")
+    gmail_user = current_app.config.get("MAIL_USERNAME", "")
+    gmail_pass = current_app.config.get("MAIL_PASSWORD", "")
 
-    if not api_key:
-        print(f"\n[EMAIL - DEV MODE]\nTo: {to_email}\nSubject: {subject}\n(Set RESEND_API_KEY to send real emails)\n")
+    if not gmail_user or not gmail_pass:
+        print(f"\n[EMAIL - DEV MODE]\nTo: {to_email}\nSubject: {subject}\n")
+        # HTML-იდან ლინკი ამოვიღოთ
+        import re
+        links = re.findall(r'href="(http[^"]+)"', html)
+        for link in links:
+            print(f"LINK: {link}")
+        print()
         return True, ""
 
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"]    = f"CodeMama <{gmail_user}>"
+    msg["To"]      = to_email
+    msg.attach(MIMEText(html, "html", "utf-8"))
+
+    # Try SSL (port 465) first, fallback to STARTTLS (port 587)
     try:
-        r = _requests.post(
-            "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type":  "application/json",
-            },
-            json={
-                "from":    f"{from_name} <{from_addr}>",
-                "to":      [to_email],
-                "subject": subject,
-                "html":    html,
-            },
-            timeout=10
-        )
-        if r.status_code in (200, 201):
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as smtp:
+            smtp.login(gmail_user, gmail_pass)
+            smtp.sendmail(gmail_user, to_email, msg.as_string())
+        return True, ""
+    except Exception as e1:
+        try:
+            with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as smtp:
+                smtp.ehlo()
+                smtp.starttls()
+                smtp.login(gmail_user, gmail_pass)
+                smtp.sendmail(gmail_user, to_email, msg.as_string())
             return True, ""
-        print(f"[RESEND ERROR] {r.status_code}: {r.text}")
-        return False, f"Resend {r.status_code}: {r.text}"
-    except Exception as e:
-        print(f"[RESEND ERROR] {e}")
-        return False, str(e)
+        except Exception as e2:
+            print(f"[MAIL ERROR] SSL: {e1} | TLS: {e2}")
+            return False, str(e2)
 
-
-# ── HTML TEMPLATES ────────────────────────────────────────
 
 _VERIFY_HTML = """<!DOCTYPE html>
 <html>
@@ -103,7 +103,7 @@ _RESET_HTML = """<!DOCTYPE html>
         <h2 style="color:#fff;font-size:20px;font-weight:800;margin:0 0 10px">გამარჯობა, {username}! 🔑</h2>
         <p style="color:#8b8fa8;font-size:14px;line-height:1.7;margin:0 0 24px">
           მოვიდა პაროლის აღდგენის მოთხოვნა.<br>
-          ქვემოთ მოცემულ ღილაკზე დაჭერით შეძლებთ ახალი პაროლის დაყენებას:
+          ქვემოთ ღილაკზე დაჭერით შეძლებთ ახალი პაროლის დაყენებას:
         </p>
         <table cellpadding="0" cellspacing="0" style="margin:0 auto 24px">
           <tr><td style="background:#ff5722;border-radius:12px;text-align:center">

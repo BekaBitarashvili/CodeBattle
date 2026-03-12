@@ -168,6 +168,24 @@ footer {
 }
 .social-btn:hover { border-color: var(--orange); color: var(--orange); }
 
+
+.footer-soc-btn {
+  width: 36px; height: 36px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none;
+  transition: color .2s, border-color .2s, background .2s, transform .2s;
+}
+.footer-soc-btn:hover {
+  color: var(--orange);
+  border-color: var(--orange)55;
+  background: var(--orange)10;
+  transform: translateY(-2px);
+}
+
 /* ── RESPONSIVE ──────────────────────────────── */
 @media (max-width: 700px) {
   footer { grid-template-columns: 1fr; text-align: center; }

@@ -11,12 +11,16 @@ from flask import current_app
 
 
 def _send(to_email: str, subject: str, html: str) -> tuple[bool, str]:
-    gmail_user = current_app.config.get("MAIL_USERNAME", "")
-    gmail_pass = current_app.config.get("MAIL_PASSWORD", "")
+    import os, sys
+
+    # პირდაპირ os.environ-იდან წავიკითხოთ
+    gmail_user = os.environ.get("MAIL_USERNAME", "")
+    gmail_pass = os.environ.get("MAIL_PASSWORD", "")
+
+    print(f"[MAIL] USER={repr(gmail_user)} PASS={'SET' if gmail_pass else 'EMPTY'}", flush=True, file=sys.stderr)
 
     if not gmail_user or not gmail_pass:
         print(f"\n[EMAIL - DEV MODE]\nTo: {to_email}\nSubject: {subject}\n")
-        # HTML-იდან ლინკი ამოვიღოთ
         import re
         links = re.findall(r'href="(http[^"]+)"', html)
         for link in links:
@@ -26,15 +30,15 @@ def _send(to_email: str, subject: str, html: str) -> tuple[bool, str]:
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"]    = f"CodeMama <{gmail_user}>"
-    msg["To"]      = to_email
+    msg["From"] = f"CodeMama <{gmail_user}>"
+    msg["To"] = to_email
     msg.attach(MIMEText(html, "html", "utf-8"))
 
-    # Try SSL (port 465) first, fallback to STARTTLS (port 587)
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as smtp:
             smtp.login(gmail_user, gmail_pass)
             smtp.sendmail(gmail_user, to_email, msg.as_string())
+        print(f"[MAIL] Sent successfully to {to_email}", flush=True, file=sys.stderr)
         return True, ""
     except Exception as e1:
         try:
@@ -43,9 +47,10 @@ def _send(to_email: str, subject: str, html: str) -> tuple[bool, str]:
                 smtp.starttls()
                 smtp.login(gmail_user, gmail_pass)
                 smtp.sendmail(gmail_user, to_email, msg.as_string())
+            print(f"[MAIL] Sent via TLS to {to_email}", flush=True, file=sys.stderr)
             return True, ""
         except Exception as e2:
-            print(f"[MAIL ERROR] SSL: {e1} | TLS: {e2}")
+            print(f"[MAIL ERROR] SSL: {e1} | TLS: {e2}", flush=True, file=sys.stderr)
             return False, str(e2)
 
 

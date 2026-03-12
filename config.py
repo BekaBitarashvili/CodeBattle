@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 import os
 from datetime import timedelta
 
@@ -21,23 +24,18 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)
     REMEMBER_COOKIE_DURATION   = timedelta(days=30)
 
-    # ── Flask-Mail (Gmail SMTP) ───────────────────────
-    MAIL_SERVER   = "smtp.gmail.com"
-    MAIL_PORT     = 587
-    MAIL_USE_TLS  = True
-    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "bekabitarashvili@gmail.com")
-    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")   # Gmail App Password აქ
-    MAIL_DEFAULT_SENDER = ("CodeQuest", os.environ.get("MAIL_USERNAME", "bekabitarashvili@gmail.com"))
+    # ── Resend Email API ──────────────────────────────
+    RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "re_fPxsVDJy_G23ZpRM9RSqXNRHRnHcGEVd8")
+    MAIL_FROM      = os.environ.get("MAIL_FROM",      "onboarding@resend.dev")
+    MAIL_FROM_NAME = os.environ.get("MAIL_FROM_NAME", "CodeMama")
 
-    # ── Judge0 Code Execution ────────────────────────────
-    # Free tier: https://rapidapi.com/judge0-official/api/judge0-ce
-    # Self-host: https://github.com/judge0/judge0
+    # ── Judge0 Code Execution ─────────────────────────
     JUDGE0_URL     = os.environ.get("JUDGE0_URL",     "https://judge0-ce.p.rapidapi.com")
-    JUDGE0_API_KEY = os.environ.get("JUDGE0_API_KEY", "")   # ← RapidAPI key აქ
+    JUDGE0_API_KEY = os.environ.get("JUDGE0_API_KEY", "")
     JUDGE0_HOST    = os.environ.get("JUDGE0_HOST",    "judge0-ce.p.rapidapi.com")
 
     # ── Token expiry ──────────────────────────────────
-    EMAIL_TOKEN_MAX_AGE = 3600   # 1 საათი (წამებში)
+    EMAIL_TOKEN_MAX_AGE = 3600
 
     # ── App-specific ──────────────────────────────────
     LANGUAGES         = ["ka", "en"]

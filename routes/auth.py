@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, session, jsonify
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from extensions import db
 from models import User
@@ -45,6 +45,9 @@ def login():
 
 # ─────────────────────────────────────────────
 #  REGISTER
+#  მომხმარებელი DB-ში არ ჩაიწერება სანამ
+#  მეილს არ დაადასტურებს. მონაცემები
+#  token-შია დაშიფრული (itsdangerous).
 # ─────────────────────────────────────────────
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
@@ -58,6 +61,7 @@ def register():
         password  = data.get("password", "")
         password2 = data.get("password2", "")
 
+        # ── Validation ────────────────────────────────
         error = None
         if not username or len(username) < 3:
             error = "სახელი უნდა იყოს მინიმუმ 3 სიმბოლო."
@@ -76,40 +80,78 @@ def register():
             if request.is_json:
                 return jsonify({"ok": False, "error": error}), 400
             flash(error, "danger")
-        else:
-            user = User(username=username, email=email, email_verified=False)
-            user.set_password(password)
-            db.session.add(user)
-            db.session.commit()
-            _send_verify(user)
-            msg = "რეგისტრაცია წარმატებულია! შეამოწმეთ ელ-ფოსტა და დაადასტურეთ ანგარიში."
+            return render_template("auth/register.html")
+
+        # ── Hash password და შევინახოთ token-ში ──────
+        from werkzeug.security import generate_password_hash
+        from utils.email_tokens import generate_register_token
+        from utils.send_email import send_verification_email
+
+        pw_hash = generate_password_hash(password)
+        token   = generate_register_token(email, username, pw_hash)
+        verify_url = url_for("auth.verify_email", token=token, _external=True)
+
+        ok, err_msg = send_verification_email(email, username, verify_url)
+
+        if not ok:
+            error = "მეილის გაგზავნა ვერ მოხერხდა. სცადეთ მოგვიანებით."
             if request.is_json:
-                return jsonify({"ok": True, "message": msg, "needs_verify": True})
-            flash(msg, "success")
-            return redirect(url_for("auth.login"))
+                return jsonify({"ok": False, "error": error}), 500
+            flash(error, "danger")
+            return render_template("auth/register.html")
+
+        msg = "გამოგზავნილია ვერიფიკაციის ლინკი. შეამოწმეთ ელ-ფოსტა."
+        if request.is_json:
+            return jsonify({"ok": True, "message": msg, "needs_verify": True})
+        flash(msg, "success")
+        return redirect(url_for("auth.login"))
 
     return render_template("auth/register.html")
 
 
 # ─────────────────────────────────────────────
 #  VERIFY EMAIL
+#  token-იდან ამოვიღოთ მონაცემები და
+#  მხოლოდ ახლა შევქმნათ მომხმარებელი
 # ─────────────────────────────────────────────
 @auth_bp.route("/verify/<token>")
 def verify_email(token):
-    from utils.email_tokens import confirm_verify_token
-    email = confirm_verify_token(token)
-    if not email:
+    from utils.email_tokens import confirm_register_token
+
+    result = confirm_register_token(token)
+    if not result:
         flash("ვერიფიკაციის ლინკი ვადაგასულია ან არასწორია.", "danger")
         return redirect(url_for("auth.login"))
 
-    user = User.query.filter_by(email=email).first_or_404()
-    if user.email_verified:
-        flash("ელ-ფოსტა უკვე დადასტურებულია. შეგიძლიათ შეხვიდეთ.", "info")
+    email, username, pw_hash = result
+
+    # თუ უკვე არსებობს (ორმაგი კლიკი)
+    existing = User.query.filter_by(email=email).first()
+    if existing:
+        if existing.email_verified:
+            flash("ელ-ფოსტა უკვე დადასტურებულია. შეგიძლიათ შეხვიდეთ.", "info")
+        else:
+            existing.email_verified = True
+            db.session.commit()
+            flash("ელ-ფოსტა დადასტურდა! 🎉 შეგიძლიათ შეხვიდეთ.", "success")
         return redirect(url_for("auth.login"))
 
-    user.email_verified = True
+    # ── მომხმარებლის შექმნა ──────────────────────
+    # username conflict-ის შემოწმება (იშვიათი, მაგრამ შესაძლებელი)
+    if User.query.filter_by(username=username).first():
+        username = username + "_1"
+
+    from werkzeug.security import generate_password_hash
+    user = User(
+        username       = username,
+        email          = email,
+        email_verified = True,
+    )
+    user.password_hash = pw_hash
+    db.session.add(user)
     db.session.commit()
-    flash("ელ-ფოსტა წარმატებით დადასტურდა! 🎉 შეგიძლიათ შეხვიდეთ.", "success")
+
+    flash("ანგარიში წარმატებით შეიქმნა! 🎉 შეგიძლიათ შეხვიდეთ.", "success")
     return redirect(url_for("auth.login"))
 
 
@@ -122,8 +164,7 @@ def resend_verify():
     email = data.get("email", "").strip().lower()
     user  = User.query.filter_by(email=email).first()
     if user and not user.email_verified:
-        _send_verify(user)
-    # Always show success (don't leak whether email exists)
+        _send_verify_existing(user)
     msg = "ვერიფიკაციის ლინკი გაგზავნილია. შეამოწმეთ inbox."
     if request.is_json:
         return jsonify({"ok": True, "message": msg})
@@ -182,7 +223,7 @@ def reset_password(token):
         else:
             user.set_password(password)
             db.session.commit()
-            flash("პაროლი წარმატებით შეიცვალა! შეგიძლიათ შეხვიდეთ. 🎉", "success")
+            flash("პაროლი წარმატებით შეიცვალა! 🎉 შეგიძლიათ შეხვიდეთ.", "success")
             if request.is_json:
                 return jsonify({"ok": True, "redirect": url_for("auth.login")})
             return redirect(url_for("auth.login"))
@@ -203,10 +244,11 @@ def logout():
 # ─────────────────────────────────────────────
 #  HELPERS
 # ─────────────────────────────────────────────
-def _send_verify(user):
+def _send_verify_existing(user):
+    """უკვე DB-ში მყოფი მომხმარებლის ვერიფიკაციის გაგზავნა."""
     from utils.email_tokens import generate_verify_token
     from utils.send_email import send_verification_email
-    token = generate_verify_token(user.email)
+    token      = generate_verify_token(user.email)
     verify_url = url_for("auth.verify_email", token=token, _external=True)
     try:
         send_verification_email(user.email, user.username, verify_url)
@@ -217,7 +259,7 @@ def _send_verify(user):
 def _send_reset(user):
     from utils.email_tokens import generate_reset_token
     from utils.send_email import send_reset_email
-    token = generate_reset_token(user.email)
+    token     = generate_reset_token(user.email)
     reset_url = url_for("auth.reset_password", token=token, _external=True)
     try:
         send_reset_email(user.email, user.username, reset_url)

@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.dash-page {
+  max-width: 1100px; margin: 0 auto;
+  padding: calc(70px + 2rem) clamp(1rem,3vw,2rem) 5rem;
+}
+.dash-grid {
+  display: grid; grid-template-columns: 400px 1fr;
+  gap: 1.6rem; align-items: start;
+}
+.dc-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 1.8rem;
+  margin-bottom: 1.4rem;
+}
+.dc-card:last-child { margin-bottom: 0; }
+.dc-card-title {
+  font-size: .72rem; font-weight: 800; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 1.2rem;
+}
+.dc-avatar {
+  width: 72px; height: 72px; border-radius: 18px;
+  background: linear-gradient(135deg, var(--orange), #ff8c42);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; font-weight: 900; color: #fff;
+  margin: 0 auto 1rem;
+}
+.dc-username { font-size: 1.3rem; font-weight: 900; text-align: center; }
+.dc-level { color: var(--orange); font-size: .85rem; font-weight: 700; text-align: center; margin-bottom: 1.2rem; }
+.dc-xp-bar {
+  background: var(--bg3); border-radius: 10px;
+  height: 8px; overflow: hidden; margin-bottom: .5rem;
+}
+.dc-xp-fill {
+  height: 100%; border-radius: 10px;
+  background: linear-gradient(90deg, var(--orange), #ff8c42);
+}
+.dc-xp-info {
+  display: flex; justify-content: space-between;
+  font-size: .78rem; color: var(--muted); margin-bottom: 1.4rem;
+}
+.dc-xp-info span:first-child { color: var(--orange); font-weight: 700; }
+.dc-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: .5rem; }
+.dc-stat {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 12px; padding: .7rem .3rem; text-align: center;
+}
+.dc-stat-val { font-size: 1rem; font-weight: 900; }
+.dc-stat-key { font-size: .65rem; color: var(--muted); margin-top: 2px; }
+/* activity */
+.dc-activity { display: flex; flex-direction: column; gap: .6rem; }
+.dc-act-row {
+  display: flex; align-items: center; gap: .8rem;
+  padding: .75rem 1rem; border-radius: 12px;
+  background: var(--bg3); border: 1px solid var(--border);
+  text-decoration: none; color: var(--text);
+  transition: border-color .18s, background .18s;
+}
+.dc-act-row:hover { border-color: var(--orange)44; background: var(--orange)06; }
+.dc-act-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.dc-act-dot.easy   { background: #00b8a3; }
+.dc-act-dot.medium { background: #ffc01e; }
+.dc-act-dot.hard   { background: #ff375f; }
+.dc-act-title { flex: 1; font-size: .88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dc-act-xp { font-size: .8rem; font-weight: 800; color: var(--orange); font-family: "Space Mono", monospace; white-space: nowrap; }
+.dc-act-date { font-size: .7rem; color: var(--muted); font-family: "Space Mono", monospace; white-space: nowrap; }
+/* badges */
+.dc-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px,1fr)); gap: .8rem; }
+.dc-badge {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1rem .7rem; text-align: center;
+  transition: border-color .18s, transform .18s;
+}
+.dc-badge:hover { border-color: var(--orange)44; transform: translateY(-2px); }
+.dc-badge-emoji { font-size: 1.8rem; margin-bottom: .4rem; }
+.dc-badge-name { font-size: .75rem; font-weight: 800; }
+.dc-badge-desc { font-size: .67rem; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+.dc-empty { text-align: center; padding: 2rem 1rem; color: var(--muted); font-size: .88rem; }
+.dc-empty-icon { font-size: 2rem; margin-bottom: .5rem; }
+@media(max-width:800px){ .dash-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash-page">
+  <div class="reveal" style="margin-bottom:2rem">
+    <div class="section-eyebrow">{{ t("პირადი კაბინეტი","Dashboard") }}</div>
+    <h1 class="section-title">{{ t("გამარჯობა,","Hello,") }} {{ user.username }}! 👋</h1>
+  </div>
+
+  <div class="dash-grid reveal">
+
+    {# LEFT: Profile #}
+    <div>
+      <div class="dc-card">
+        <div class="dc-avatar">{{ user.username[:2].upper() }}</div>
+        <div class="dc-username">{{ user.username }}</div>
+        <div class="dc-level">Lv. {{ user.level }}</div>
+        <div class="dc-xp-bar">
+          <div class="dc-xp-fill" style="width:{{ user.xp_progress_pct() }}%"></div>
+        </div>
+        <div class="dc-xp-info">
+          <span>{{ "{:,}".format(user.xp) }} XP</span>
+          <span>{{ user.xp_to_next_level() }} {{ t("შემდეგ დონემდე","to next level") }}</span>
+        </div>
+        <div class="dc-stats">
+          <div class="dc-stat">
+            <div class="dc-stat-val">🔥{{ user.streak }}</div>
+            <div class="dc-stat-key">Streak</div>
+          </div>
+          <div class="dc-stat">
+            <div class="dc-stat-val">{{ user.solved_count() }}</div>
+            <div class="dc-stat-key">{{ t("ამოხსნილი","Solved") }}</div>
+          </div>
+          <div class="dc-stat">
+            <div class="dc-stat-val">{{ user.olympiad_registrations.count() }}</div>
+            <div class="dc-stat-key">{{ t("ოლიმპიადა","Olympiad") }}</div>
+          </div>
+          <div class="dc-stat">
+            <div class="dc-stat-val">{{ user.badges.count() }}</div>
+            <div class="dc-stat-key">{{ t("ბეჯი","Badges") }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# RIGHT: Activity + Badges #}
+    <div>
+      <div class="dc-card">
+        <div class="dc-card-title">⚡ {{ t("ბოლო აქტივობა","Recent Activity") }}</div>
+        {% if recent %}
+        <div class="dc-activity">
+          {% for item in recent %}
+          <a href="{{ url_for('tasks.detail', task_id=item.task.id) }}" class="dc-act-row">
+            <span class="dc-act-dot {{ item.task.difficulty }}"></span>
+            <span class="dc-act-title">{{ item.task.get_title(lang) }}</span>
+            <span class="dc-act-xp">+{{ item.task.xp }} XP</span>
+            <span class="dc-act-date">{{ item.submitted_at.strftime('%d/%m') }}</span>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="dc-empty">
+          <div class="dc-empty-icon">🎯</div>
+          <p>{{ t("ჯერ ამოხსნილი ტასკი არ არის.","No solved tasks yet.") }}</p>
+        </div>
+        {% endif %}
+        <a href="{{ url_for('tasks.index') }}" class="btn-primary"
+           style="display:inline-block;margin-top:1.2rem;padding:10px 24px;text-decoration:none;font-size:.88rem">
+          {{ t("ახალი ტასკი","Find a Problem") }} →
+        </a>
+      </div>
+
+      <div class="dc-card">
+        <div class="dc-card-title">🏅 {{ t("ჩემი ბეჯები","My Badges") }}</div>
+        {% if badges %}
+        <div class="dc-badges">
+          {% for badge in badges %}
+          <div class="dc-badge">
+            <div class="dc-badge-emoji">{{ badge.emoji }}</div>
+            <div class="dc-badge-name">{{ badge.name_ka if lang=='ka' else badge.name_en }}</div>
+            <div class="dc-badge-desc">{{ badge.description_ka if lang=='ka' else badge.description_en }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="dc-empty">
+          <div class="dc-empty-icon">🏅</div>
+          <p>{{ t("ბეჯები ჯერ არ გაქვს.","No badges yet. Solve tasks!") }}</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -14,19 +14,22 @@ class Config:
     _INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
     os.makedirs(_INSTANCE_DIR, exist_ok=True)
 
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
+    _db_url = os.environ.get(
         "DATABASE_URL",
-        f"sqlite:///{os.path.join(_INSTANCE_DIR, 'codequest.db')}"
+        f"sqlite:///{os.path.join(_INSTANCE_DIR, 'codemama.db')}"
     )
+    # Render-ის postgres:// → postgresql://
+    if _db_url.startswith("postgres://"):
+        _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+    SQLALCHEMY_DATABASE_URI = _db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # ── Session ───────────────────────────────────────
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)
     REMEMBER_COOKIE_DURATION   = timedelta(days=30)
 
-    # ── Brevo SMTP ────────────────────────────────────
-    BREVO_SMTP_USER = os.environ.get("BREVO_SMTP_USER", "")
-    BREVO_SMTP_KEY  = os.environ.get("BREVO_SMTP_KEY",  "")
+    # ── Brevo HTTP API ────────────────────────────────
+    BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "")
 
     # ── Judge0 Code Execution ─────────────────────────
     JUDGE0_URL     = os.environ.get("JUDGE0_URL",     "https://ce.judge0.com")

@@ -1,5 +1,6 @@
 from flask import Flask, session
 from extensions import db, login_manager
+from flask_migrate import Migrate
 from config import Config
 
 
@@ -9,6 +10,7 @@ def create_app(config_class=Config):
 
     db.init_app(app)
     login_manager.init_app(app)
+    Migrate(app, db)
     login_manager.login_view = "auth.login"
     login_manager.login_message = "გთხოვთ გაიაროთ ავტორიზაცია."
 

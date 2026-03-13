@@ -1,24 +1,16 @@
 """
-Email sending via Brevo SMTP.
-Config (set in Render environment variables):
-  BREVO_SMTP_USER = a4cefb001@smtp-brevo.com
-  BREVO_SMTP_KEY  = xsmtpsib-...
+Email sending via Brevo HTTP API (not SMTP).
+Works on Render free tier — no port restrictions.
 """
-import smtplib
+import os
 import sys
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from flask import current_app
+import requests
 
 
 def _send(to_email: str, subject: str, html: str) -> tuple[bool, str]:
-    import os
-    smtp_user = os.environ.get("BREVO_SMTP_USER", "")
-    smtp_key  = os.environ.get("BREVO_SMTP_KEY",  "")
+    api_key = os.environ.get("BREVO_API_KEY", "")
 
-    print(f"[MAIL] USER={repr(smtp_user)} KEY={'SET' if smtp_key else 'EMPTY'}", flush=True, file=sys.stderr)
-
-    if not smtp_user or not smtp_key:
+    if not api_key:
         print(f"\n[EMAIL - DEV MODE]\nTo: {to_email}\nSubject: {subject}")
         import re
         for link in re.findall(r'href="(http[^"]+)"', html):
@@ -26,20 +18,26 @@ def _send(to_email: str, subject: str, html: str) -> tuple[bool, str]:
         print()
         return True, ""
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"]    = f"CodeMama <{smtp_user}>"
-    msg["To"]      = to_email
-    msg.attach(MIMEText(html, "html", "utf-8"))
-
     try:
-        with smtplib.SMTP("smtp-relay.brevo.com", 587, timeout=15) as smtp:
-            smtp.ehlo()
-            smtp.starttls()
-            smtp.login(smtp_user, smtp_key)
-            smtp.sendmail(smtp_user, to_email, msg.as_string())
-        print(f"[MAIL] Sent to {to_email}", flush=True, file=sys.stderr)
-        return True, ""
+        r = requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={
+                "api-key":      api_key,
+                "Content-Type": "application/json",
+            },
+            json={
+                "sender":     {"name": "CodeMama", "email": "c0d3mama@gmail.com"},
+                "to":         [{"email": to_email}],
+                "subject":    subject,
+                "htmlContent": html,
+            },
+            timeout=15,
+        )
+        if r.status_code in (200, 201):
+            print(f"[MAIL] Sent to {to_email}", flush=True, file=sys.stderr)
+            return True, ""
+        print(f"[MAIL ERROR] {r.status_code}: {r.text}", flush=True, file=sys.stderr)
+        return False, r.text
     except Exception as e:
         print(f"[MAIL ERROR] {e}", flush=True, file=sys.stderr)
         return False, str(e)

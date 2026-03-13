@@ -1,9 +1,5 @@
 from dotenv import load_dotenv
-load_dotenv()
-
-import os
-print(f"[CONFIG] MAIL_USERNAME={repr(os.environ.get('MAIL_USERNAME'))}", flush=True)
-print(f"[CONFIG] MAIL_PASSWORD={'SET' if os.environ.get('MAIL_PASSWORD') else 'EMPTY'}", flush=True)
+load_dotenv(override=False)
 
 import os
 from datetime import timedelta
@@ -28,14 +24,14 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)
     REMEMBER_COOKIE_DURATION   = timedelta(days=30)
 
-    # ── Gmail SMTP ────────────────────────────────────
-    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
-    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
+    # ── Brevo SMTP ────────────────────────────────────
+    BREVO_SMTP_USER = os.environ.get("BREVO_SMTP_USER", "")
+    BREVO_SMTP_KEY  = os.environ.get("BREVO_SMTP_KEY",  "")
 
     # ── Judge0 Code Execution ─────────────────────────
-    JUDGE0_URL     = os.environ.get("JUDGE0_URL",     "https://judge0-ce.p.rapidapi.com")
+    JUDGE0_URL     = os.environ.get("JUDGE0_URL",     "https://ce.judge0.com")
     JUDGE0_API_KEY = os.environ.get("JUDGE0_API_KEY", "")
-    JUDGE0_HOST    = os.environ.get("JUDGE0_HOST",    "judge0-ce.p.rapidapi.com")
+    JUDGE0_HOST    = os.environ.get("JUDGE0_HOST",    "ce.judge0.com")
 
     # ── Token expiry ──────────────────────────────────
     EMAIL_TOKEN_MAX_AGE = 3600

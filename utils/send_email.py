@@ -1,57 +1,48 @@
 """
-Email sending via Gmail SMTP.
-Config (set in .env or Render environment):
-  MAIL_USERNAME = c0d3mama@gmail.com
-  MAIL_PASSWORD = xxxx xxxx xxxx xxxx  (Gmail App Password)
+Email sending via Brevo SMTP.
+Config (set in Render environment variables):
+  BREVO_SMTP_USER = a4cefb001@smtp-brevo.com
+  BREVO_SMTP_KEY  = xsmtpsib-...
 """
 import smtplib
+import sys
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from flask import current_app
 
 
 def _send(to_email: str, subject: str, html: str) -> tuple[bool, str]:
-    import os, sys
+    import os
+    smtp_user = os.environ.get("BREVO_SMTP_USER", "")
+    smtp_key  = os.environ.get("BREVO_SMTP_KEY",  "")
 
-    # პირდაპირ os.environ-იდან წავიკითხოთ
-    gmail_user = os.environ.get("MAIL_USERNAME", "")
-    gmail_pass = os.environ.get("MAIL_PASSWORD", "")
+    print(f"[MAIL] USER={repr(smtp_user)} KEY={'SET' if smtp_key else 'EMPTY'}", flush=True, file=sys.stderr)
 
-    print(f"[MAIL] USER={repr(gmail_user)} PASS={'SET' if gmail_pass else 'EMPTY'}", flush=True, file=sys.stderr)
-
-    if not gmail_user or not gmail_pass:
-        print(f"\n[EMAIL - DEV MODE]\nTo: {to_email}\nSubject: {subject}\n")
+    if not smtp_user or not smtp_key:
+        print(f"\n[EMAIL - DEV MODE]\nTo: {to_email}\nSubject: {subject}")
         import re
-        links = re.findall(r'href="(http[^"]+)"', html)
-        for link in links:
+        for link in re.findall(r'href="(http[^"]+)"', html):
             print(f"LINK: {link}")
         print()
         return True, ""
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = f"CodeMama <{gmail_user}>"
-    msg["To"] = to_email
+    msg["From"]    = f"CodeMama <{smtp_user}>"
+    msg["To"]      = to_email
     msg.attach(MIMEText(html, "html", "utf-8"))
 
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as smtp:
-            smtp.login(gmail_user, gmail_pass)
-            smtp.sendmail(gmail_user, to_email, msg.as_string())
-        print(f"[MAIL] Sent successfully to {to_email}", flush=True, file=sys.stderr)
+        with smtplib.SMTP("smtp-relay.brevo.com", 587, timeout=15) as smtp:
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.login(smtp_user, smtp_key)
+            smtp.sendmail(smtp_user, to_email, msg.as_string())
+        print(f"[MAIL] Sent to {to_email}", flush=True, file=sys.stderr)
         return True, ""
-    except Exception as e1:
-        try:
-            with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as smtp:
-                smtp.ehlo()
-                smtp.starttls()
-                smtp.login(gmail_user, gmail_pass)
-                smtp.sendmail(gmail_user, to_email, msg.as_string())
-            print(f"[MAIL] Sent via TLS to {to_email}", flush=True, file=sys.stderr)
-            return True, ""
-        except Exception as e2:
-            print(f"[MAIL ERROR] SSL: {e1} | TLS: {e2}", flush=True, file=sys.stderr)
-            return False, str(e2)
+    except Exception as e:
+        print(f"[MAIL ERROR] {e}", flush=True, file=sys.stderr)
+        return False, str(e)
 
 
 _VERIFY_HTML = """<!DOCTYPE html>

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, session
 from flask_login import login_user, logout_user, login_required, current_user
 from extensions import db
 from models import User
@@ -28,7 +28,8 @@ def login():
                 flash(err, "warning")
                 return render_template("auth/login.html")
 
-            login_user(user, remember=bool(data.get("remember")))
+            login_user(user, remember=False)
+            session.permanent = True
             user.update_streak()
             _award_streak_badges(user)
             if request.is_json:

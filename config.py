@@ -25,8 +25,8 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # ── Session ───────────────────────────────────────
-    PERMANENT_SESSION_LIFETIME = timedelta(days=30)
-    REMEMBER_COOKIE_DURATION   = timedelta(days=30)
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=1)
+    REMEMBER_COOKIE_DURATION   = timedelta(hours=1)
 
     # ── Brevo HTTP API ────────────────────────────────
     BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "")

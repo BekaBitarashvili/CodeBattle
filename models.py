@@ -56,7 +56,6 @@ class User(UserMixin, db.Model):
 
     # Email verification
     email_verified = db.Column(db.Boolean, default=False)
-    is_admin = db.Column(db.Boolean, default=False, nullable=False, server_default="false")
 
     # Language preference  ("ka" | "en")
     language      = db.Column(db.String(4), default="ka")

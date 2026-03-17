@@ -61,8 +61,8 @@ def _seed_olympiads():
         Olympiad(
             title_ka="მარტის კოდინგის ოლიმპიადა 2026",
             title_en="March Coding Olympiad 2026",
-            start_date=now + timedelta(days=3),
-            end_date=now + timedelta(days=10),
+            start_date=now + timedelta(days=13),
+            end_date=now + timedelta(days=20),
             prize_info="MacBook Pro M3 · iPad Pro · AirPods Pro",
             is_active=True,
         ),

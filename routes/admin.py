@@ -1,5 +1,6 @@
 import os
-from flask import Blueprint, render_template, redirect, url_for, abort
+from datetime import datetime
+from flask import Blueprint, render_template, redirect, url_for, request, abort, flash
 from flask_login import current_user, login_required
 from extensions import db
 from models import Olympiad, OlympiadRegistration, User
@@ -40,7 +41,66 @@ def dashboard():
                            total_regs=total_regs)
 
 
-# ── Olympiad registrants ──────────────────────
+# ── Olympiad Create ───────────────────────────
+@admin_bp.route("/olympiad/new", methods=["GET", "POST"])
+@login_required
+@admin_required
+def olympiad_new():
+    if request.method == "POST":
+        try:
+            o = Olympiad(
+                title_ka   = request.form["title_ka"],
+                title_en   = request.form["title_en"],
+                start_date = datetime.strptime(request.form["start_date"], "%Y-%m-%dT%H:%M"),
+                end_date   = datetime.strptime(request.form["end_date"],   "%Y-%m-%dT%H:%M"),
+                prize_info = request.form.get("prize_info", ""),
+                is_active  = "is_active" in request.form,
+            )
+            db.session.add(o)
+            db.session.commit()
+            flash("ოლიმპიადა შეიქმნა! ✅", "success")
+            return redirect(url_for("admin.dashboard"))
+        except Exception as e:
+            flash(f"შეცდომა: {e}", "danger")
+    return render_template("admin/olympiad_form.html", olympiad=None, action="new")
+
+
+# ── Olympiad Edit ─────────────────────────────
+@admin_bp.route("/olympiad/<int:olympiad_id>/edit", methods=["GET", "POST"])
+@login_required
+@admin_required
+def olympiad_edit(olympiad_id):
+    o = Olympiad.query.get_or_404(olympiad_id)
+    if request.method == "POST":
+        try:
+            o.title_ka   = request.form["title_ka"]
+            o.title_en   = request.form["title_en"]
+            o.start_date = datetime.strptime(request.form["start_date"], "%Y-%m-%dT%H:%M")
+            o.end_date   = datetime.strptime(request.form["end_date"],   "%Y-%m-%dT%H:%M")
+            o.prize_info = request.form.get("prize_info", "")
+            o.is_active  = "is_active" in request.form
+            db.session.commit()
+            flash("ოლიმპიადა განახლდა! ✅", "success")
+            return redirect(url_for("admin.dashboard"))
+        except Exception as e:
+            flash(f"შეცდომა: {e}", "danger")
+    return render_template("admin/olympiad_form.html", olympiad=o, action="edit")
+
+
+# ── Olympiad Delete ───────────────────────────
+@admin_bp.route("/olympiad/<int:olympiad_id>/delete", methods=["POST"])
+@login_required
+@admin_required
+def olympiad_delete(olympiad_id):
+    o = Olympiad.query.get_or_404(olympiad_id)
+    OlympiadRegistration.query.filter_by(olympiad_id=olympiad_id).delete()
+    db.session.delete(o)
+    db.session.commit()
+    flash("ოლიმპიადა წაიშალა.", "success")
+    return redirect(url_for("admin.dashboard"))
+
+
+# ── Olympiad Registrants ──────────────────────
 @admin_bp.route("/olympiad/<int:olympiad_id>")
 @login_required
 @admin_required

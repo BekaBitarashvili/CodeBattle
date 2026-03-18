@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ t("ოლიმპიადის რედაქტირება", "Edit Olympiad") if action == 'edit' else t("ახალი ოლიმპიადა", "New Olympiad") }}{% endblock %}
+{% block extra_css %}
+<style>
+.admin-wrap { max-width:700px; margin:0 auto; padding:calc(70px + 3rem) clamp(1rem,5vw,2rem) 6rem; }
+.admin-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:2.5rem; flex-wrap:wrap; gap:1rem; }
+.admin-title  { font-size:1.8rem; font-weight:900; }
+.form-card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:2rem; }
+.form-group { margin-bottom:1.4rem; }
+.form-group label { display:block; font-size:.8rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:.5rem; }
+.form-group input,
+.form-group textarea { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:.8rem 1rem; color:var(--text); font-size:.95rem; outline:none; transition:border-color .2s; box-sizing:border-box; }
+.form-group input:focus,
+.form-group textarea:focus { border-color:var(--orange); }
+.form-group textarea { min-height:100px; resize:vertical; font-family:inherit; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.form-check { display:flex; align-items:center; gap:.6rem; cursor:pointer; font-size:.9rem; font-weight:600; }
+.form-check input { width:auto; }
+.form-actions { display:flex; gap:1rem; margin-top:1.6rem; }
+@media(max-width:600px){ .form-row{grid-template-columns:1fr;} }
+</style>
+{% endblock %}
+{% block content %}
+<div class="admin-wrap">
+  <div class="admin-header">
+    <div>
+      <div style="font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:.4rem">Admin Panel</div>
+      <h1 class="admin-title">
+        {{ "✏️ " + t("ოლიმპიადის რედაქტირება", "Edit Olympiad") if action == 'edit' else "➕ " + t("ახალი ოლიმპიადა", "New Olympiad") }}
+      </h1>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn-ghost" style="font-size:.9rem">
+      ← {{ t("უკან", "Back") }}
+    </a>
+  </div>
+
+  <div class="form-card">
+    <form method="POST">
+      <div class="form-row">
+        <div class="form-group">
+          <label>{{ t("სახელი (ქართულად)", "Title (Georgian)") }}</label>
+          <input type="text" name="title_ka" required
+                 value="{{ olympiad.title_ka if olympiad else '' }}"
+                 placeholder="მარტის ოლიმპიადა">
+        </div>
+        <div class="form-group">
+          <label>{{ t("სახელი (ინგლისურად)", "Title (English)") }}</label>
+          <input type="text" name="title_en" required
+                 value="{{ olympiad.title_en if olympiad else '' }}"
+                 placeholder="March Olympiad">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>{{ t("დაწყების თარიღი", "Start Date") }}</label>
+          <input type="datetime-local" name="start_date" required
+                 value="{{ olympiad.start_date.strftime('%Y-%m-%dT%H:%M') if olympiad else '' }}">
+        </div>
+        <div class="form-group">
+          <label>{{ t("დასრულების თარიღი", "End Date") }}</label>
+          <input type="datetime-local" name="end_date" required
+                 value="{{ olympiad.end_date.strftime('%Y-%m-%dT%H:%M') if olympiad else '' }}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>{{ t("პრიზები / ინფო", "Prizes / Info") }}</label>
+        <textarea name="prize_info" placeholder="{{ t('პრიზების აღწერა...', 'Prize description...') }}">{{ olympiad.prize_info if olympiad else '' }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-check">
+          <input type="checkbox" name="is_active"
+                 {{ 'checked' if (olympiad and olympiad.is_active) or not olympiad else '' }}>
+          {{ t("აქტიური", "Active") }}
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" style="padding:12px 32px">
+          {{ t("შენახვა", "Save") }} ✅
+        </button>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn-ghost" style="padding:12px 24px">
+          {{ t("გაუქმება", "Cancel") }}
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

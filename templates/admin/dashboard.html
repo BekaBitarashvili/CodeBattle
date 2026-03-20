@@ -38,7 +38,10 @@ tr:hover td { background:var(--orange)06; }
       <div style="font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:.4rem">Admin Panel</div>
       <h1 class="admin-title">📊 Dashboard</h1>
     </div>
-    <a href="{{ url_for('auth.logout') }}" class="btn-ghost" style="font-size:.9rem">
+    <a href="{{ url_for('admin.users') }}" class="btn-primary" style="font-size:.82rem;padding:8px 18px;text-decoration:none;margin-right:.5rem">
+        👥 {{ t("მომხმარებლები", "Users") }}
+      </a>
+      <a href="{{ url_for('auth.logout') }}" class="btn-ghost" style="font-size:.9rem">
       {{ t("გასვლა", "Logout") }} →
     </a>
   </div>

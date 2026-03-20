@@ -116,10 +116,61 @@ def olympiad_registrants(olympiad_id):
     return render_template("admin/registrants.html", olympiad=olympiad, regs=regs)
 
 
-# ── Users list ────────────────────────────────
+# ── Users List ────────────────────────────────
 @admin_bp.route("/users")
 @login_required
 @admin_required
 def users():
-    all_users = User.query.order_by(User.created_at.desc()).all()
-    return render_template("admin/users.html", users=all_users)
+    search = request.args.get("q", "").strip()
+    query  = User.query
+    if search:
+        query = query.filter(
+            User.username.ilike(f"%{search}%") |
+            User.email.ilike(f"%{search}%")
+        )
+    all_users = query.order_by(User.created_at.desc()).all()
+    return render_template("admin/users.html", users=all_users, search=search)
+
+
+# ── User Edit ─────────────────────────────────
+@admin_bp.route("/users/<int:user_id>/edit", methods=["GET", "POST"])
+@login_required
+@admin_required
+def user_edit(user_id):
+    u = User.query.get_or_404(user_id)
+    if request.method == "POST":
+        try:
+            u.username       = request.form["username"]
+            u.email          = request.form["email"]
+            u.xp             = int(request.form.get("xp", u.xp))
+            u.level          = int(request.form.get("level", u.level))
+            u.streak         = int(request.form.get("streak", u.streak))
+            u.email_verified = "email_verified" in request.form
+            new_pass = request.form.get("new_password", "").strip()
+            if new_pass:
+                u.set_password(new_pass)
+            db.session.commit()
+            flash(f"{u.username} — განახლდა! ✅", "success")
+            return redirect(url_for("admin.users"))
+        except Exception as e:
+            flash(f"შეცდომა: {e}", "danger")
+    return render_template("admin/user_form.html", user=u)
+
+
+# ── User Delete ───────────────────────────────
+@admin_bp.route("/users/<int:user_id>/delete", methods=["POST"])
+@login_required
+@admin_required
+def user_delete(user_id):
+    u = User.query.get_or_404(user_id)
+    if u.email.lower() in [e.strip().lower() for e in os.environ.get("ADMIN_EMAILS","").split(",")]:
+        flash("ადმინის წაშლა შეუძლებელია.", "danger")
+        return redirect(url_for("admin.users"))
+    # წაშალე submissions და olympiad registrations
+    from models import Submission
+    Submission.query.filter_by(user_id=user_id).delete()
+    OlympiadRegistration.query.filter_by(user_id=user_id).delete()
+    db.session.delete(u)
+    db.session.commit()
+    flash("მომხმარებელი წაიშალა.", "success")
+    return redirect(url_for("admin.users"))

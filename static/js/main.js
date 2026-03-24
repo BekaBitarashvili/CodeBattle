@@ -19,18 +19,18 @@ window.addEventListener('load', () => {
 });
 
 /* ── CUSTOM CURSOR ── */
-const cur = document.getElementById('cursor');
-const dot = document.getElementById('cursor-dot');
-if (cur && dot) {
-  document.addEventListener('mousemove', e => {
-    cur.style.left = e.clientX + 'px'; cur.style.top = e.clientY + 'px';
-    dot.style.left = e.clientX + 'px'; dot.style.top = e.clientY + 'px';
-  });
-  document.addEventListener('mouseover', e => {
-    if (e.target.matches('a,button,[role="button"]')) cur.classList.add('hover');
-    else cur.classList.remove('hover');
-  });
-}
+// const cur = document.getElementById('cursor');
+// const dot = document.getElementById('cursor-dot');
+// if (cur && dot) {
+//   document.addEventListener('mousemove', e => {
+//     cur.style.left = e.clientX + 'px'; cur.style.top = e.clientY + 'px';
+//     dot.style.left = e.clientX + 'px'; dot.style.top = e.clientY + 'px';
+//   });
+//   document.addEventListener('mouseover', e => {
+//     if (e.target.matches('a,button,[role="button"]')) cur.classList.add('hover');
+//     else cur.classList.remove('hover');
+//   });
+// }
 
 /* ── THEME ── */
 const themeToggle = document.getElementById('themeToggle');

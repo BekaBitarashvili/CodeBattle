@@ -1,223 +1,245 @@
 <!DOCTYPE html>
 <html lang="{{ lang }}" data-theme="dark" id="htmlRoot">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}CodeMama{% endblock %} — {{ t("კოდის სამყარო", "World of Code") }}</title>
-  <meta name="description" content="{{ t('კოდინგის გამოწვევები, ოლიმპიადები და საგანმანათლებლო პლატფორმა.', 'Coding challenges, olympiads and educational platform.') }}">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>{% block title %}CodeMama{% endblock %} — {{ t("კოდის სამყარო", "World of Code") }}</title>
+    <meta name="description"
+          content="{{ t('კოდინგის გამოწვევები, ოლიმპიადები და საგანმანათლებლო პლატფორმა.', 'Coding challenges, olympiads and educational platform.') }}">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}"/>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}"/>
-  {% block extra_css %}{% endblock %}
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;600;700;900&display=swap"
+          rel="stylesheet"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}"/>
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
 
-  {# ── LOADER ── #}
-  <div class="loader-overlay" id="loader">
+{# ── LOADER ── #}
+<div class="loader-overlay" id="loader">
     <span class="loader-spin">&lt;/&gt;</span>
     <div class="loader-text" id="loaderText">{{ t("იტვირთება...", "Loading...") }}</div>
-  </div>
+</div>
 
-  {# ── CURSOR ── #}
+{# ── CURSOR ── #}
 {#  <div id="cursor"></div>#}
 {#  <div id="cursor-dot"></div>#}
 
-  {# ── PARTICLES ── #}
-  <canvas id="particles-canvas"></canvas>
+{# ── PARTICLES ── #}
+<canvas id="particles-canvas"></canvas>
 
-  {# ── XP TOAST ── #}
-  <div class="xp-toast" id="xpToast">
+{# ── XP TOAST ── #}
+<div class="xp-toast" id="xpToast">
     <span class="xp-icon">⚡</span>
     <span id="xpAmount">+50 XP</span>
-  </div>
+</div>
 
-  {# ── FLASH MESSAGES ── #}
-  {% with messages = get_flashed_messages(with_categories=true) %}
+{# ── FLASH MESSAGES ── #}
+{% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      <div class="flash-container">
-        {% for category, message in messages %}
-          <div class="flash flash--{{ category }}">{{ message }}</div>
-        {% endfor %}
-      </div>
+        <div class="flash-container">
+            {% for category, message in messages %}
+                <div class="flash flash--{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
     {% endif %}
-  {% endwith %}
+{% endwith %}
 
-  {# ══════════════════ NAVBAR ══════════════════ #}
-  <nav id="navbar">
+{# ══════════════════ NAVBAR ══════════════════ #}
+<nav id="navbar">
     <a href="{{ url_for('main.index') }}" class="nav-logo">
-      <div class="nav-logo-icon">&lt;/&gt;</div>
-      Code<span>Mama</span>
+        <div class="nav-logo-icon">&lt;/&gt;</div>
+        Code<span>Mama</span>
     </a>
 
     <ul class="nav-links" id="navLinks">
-      <li><a href="{{ url_for('main.index') }}"    {% if request.endpoint == 'main.index' %}class="active-link"{% endif %}>{{ t("მთავარი", "Home") }}</a></li>
-      <li><a href="{{ url_for('about.index') }}"   {% if request.endpoint and request.endpoint.startswith('about') %}class="active-link"{% endif %}>{{ t("შესახებ", "About") }}</a></li>
-      <li><a href="{{ url_for('tasks.index') }}"   {% if request.endpoint and request.endpoint.startswith('tasks') %}class="active-link"{% endif %}>{{ t("ამოცანები", "Problems") }}</a></li>
-      <li><a href="{{ url_for('ratings.index') }}" {% if request.endpoint and request.endpoint.startswith('ratings') %}class="active-link"{% endif %}>{{ t("რეიტინგი", "Ratings") }}</a></li>
-      <li><a href="{{ url_for('olympiad.index') }}"{% if request.endpoint and request.endpoint.startswith('olympiad') %}class="active-link"{% endif %}>{{ t("ოლიმპიადა", "Olympiad") }}</a></li>
-      <li><a href="{{ url_for('help.index') }}"    {% if request.endpoint and request.endpoint.startswith('help') %}class="active-link"{% endif %}>{{ t("დახმარება", "Help") }}</a></li>
+        <li><a href="{{ url_for('main.index') }}"
+               {% if request.endpoint == 'main.index' %}class="active-link"{% endif %}>{{ t("მთავარი", "Home") }}</a>
+        </li>
+        <li><a href="{{ url_for('about.index') }}"
+               {% if request.endpoint and request.endpoint.startswith('about') %}class="active-link"{% endif %}>{{ t("შესახებ", "About") }}</a>
+        </li>
+        <li><a href="{{ url_for('tasks.index') }}"
+               {% if request.endpoint and request.endpoint.startswith('tasks') %}class="active-link"{% endif %}>{{ t("ამოცანები", "Problems") }}</a>
+        </li>
+        <li><a href="{{ url_for('ratings.index') }}"
+               {% if request.endpoint and request.endpoint.startswith('ratings') %}class="active-link"{% endif %}>{{ t("რეიტინგი", "Ratings") }}</a>
+        </li>
+        <li><a href="{{ url_for('olympiad.index') }}"
+               {% if request.endpoint and request.endpoint.startswith('olympiad') %}class="active-link"{% endif %}>{{ t("ოლიმპიადა", "Olympiad") }}</a>
+        </li>
+        <li><a href="{{ url_for('help.index') }}"
+               {% if request.endpoint and request.endpoint.startswith('help') %}class="active-link"{% endif %}>{{ t("დახმარება", "Help") }}</a>
+        </li>
     </ul>
 
     <div class="nav-right">
-      {# Language toggle #}
-      <div class="lang-toggle">
-        <a href="{{ url_for('main.set_language', lang='ka') }}"
-           class="lang-btn {% if lang == 'ka' %}active{% endif %}">ქარ</a>
-        <a href="{{ url_for('main.set_language', lang='en') }}"
-           class="lang-btn {% if lang == 'en' %}active{% endif %}">ENG</a>
-      </div>
+        {# Language toggle #}
+        <div class="lang-toggle">
+            <a href="{{ url_for('main.set_language', lang='ka') }}"
+               class="lang-btn {% if lang == 'ka' %}active{% endif %}">ქარ</a>
+            <a href="{{ url_for('main.set_language', lang='en') }}"
+               class="lang-btn {% if lang == 'en' %}active{% endif %}">ENG</a>
+        </div>
 
-      {# Theme toggle #}
-      <button class="theme-toggle" id="themeToggle" title="{{ t('თემის გადართვა','Toggle theme') }}">
-        <div class="theme-toggle-knob">🌙</div>
-      </button>
+        {# Theme toggle #}
+        <button class="theme-toggle" id="themeToggle" title="{{ t('თემის გადართვა','Toggle theme') }}">
+            <div class="theme-toggle-knob">🌙</div>
+        </button>
 
-      {# Auth / Profile #}
-      {% if current_user.is_authenticated %}
-        <a href="{{ url_for('dashboard.index') }}" class="nav-avatar" title="{{ current_user.username }}">
-          {{ current_user.username[:2].upper() }}
-        </a>
-        <a href="{{ url_for('auth.logout') }}" class="btn-ghost">{{ t("გასვლა", "Logout") }}</a>
-      {% else %}
-        <button class="btn-ghost"    onclick="openModal('login')">{{ t("შესვლა", "Login") }}</button>
-        <button class="btn-primary"  onclick="openModal('register')">{{ t("რეგისტრაცია", "Sign up") }}</button>
-      {% endif %}
+        {# Auth / Profile #}
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('dashboard.index') }}" class="nav-avatar" title="{{ current_user.username }}">
+                {{ current_user.username[:2].upper() }}
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="btn-ghost">{{ t("გასვლა", "Logout") }}</a>
+        {% else %}
+            <button class="btn-ghost" onclick="openModal('login')">{{ t("შესვლა", "Login") }}</button>
+            <button class="btn-primary" onclick="openModal('register')">{{ t("რეგისტრაცია", "Sign up") }}</button>
+        {% endif %}
 
-      <button class="hamburger" id="hamburger" aria-label="Menu">
-        <span></span><span></span><span></span>
-      </button>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
     </div>
-  </nav>
+</nav>
 
-  {# Mobile nav #}
-  <div class="mobile-nav" id="mobileNav">
-    <a href="{{ url_for('main.index') }}"    onclick="closeMobile()">{{ t("მთავარი","Home") }}</a>
-    <a href="{{ url_for('about.index') }}"   onclick="closeMobile()">{{ t("შესახებ","About") }}</a>
-    <a href="{{ url_for('tasks.index') }}"   onclick="closeMobile()">{{ t("ამოცანები","Problems") }}</a>
+{# Mobile nav #}
+<div class="mobile-nav" id="mobileNav">
+    <a href="{{ url_for('main.index') }}" onclick="closeMobile()">{{ t("მთავარი","Home") }}</a>
+    <a href="{{ url_for('about.index') }}" onclick="closeMobile()">{{ t("შესახებ","About") }}</a>
+    <a href="{{ url_for('tasks.index') }}" onclick="closeMobile()">{{ t("ამოცანები","Problems") }}</a>
     <a href="{{ url_for('ratings.index') }}" onclick="closeMobile()">{{ t("რეიტინგი","Ratings") }}</a>
-    <a href="{{ url_for('olympiad.index') }}"onclick="closeMobile()">{{ t("ოლიმპიადა","Olympiad") }}</a>
-    <a href="{{ url_for('help.index') }}"    onclick="closeMobile()">{{ t("დახმარება","Help") }}</a>
+    <a href="{{ url_for('olympiad.index') }}" onclick="closeMobile()">{{ t("ოლიმპიადა","Olympiad") }}</a>
+    <a href="{{ url_for('help.index') }}" onclick="closeMobile()">{{ t("დახმარება","Help") }}</a>
     {% if current_user.is_authenticated %}
-      <a href="{{ url_for('dashboard.index') }}" onclick="closeMobile()">Dashboard</a>
-      <a href="{{ url_for('auth.logout') }}"      onclick="closeMobile()">{{ t("გასვლა","Logout") }}</a>
+        <a href="{{ url_for('dashboard.index') }}" onclick="closeMobile()">Dashboard</a>
+        <a href="{{ url_for('auth.logout') }}" onclick="closeMobile()">{{ t("გასვლა","Logout") }}</a>
     {% else %}
-      <div style="display:flex;gap:.7rem;margin-top:1rem">
-        <button class="btn-ghost"   style="flex:1" onclick="openModal('login');closeMobile()">{{ t("შესვლა","Login") }}</button>
-        <button class="btn-primary" style="flex:1" onclick="openModal('register');closeMobile()">{{ t("რეგისტრაცია","Sign up") }}</button>
-      </div>
+        <div style="display:flex;gap:.7rem;margin-top:1rem">
+            <button class="btn-ghost" style="flex:1"
+                    onclick="openModal('login');closeMobile()">{{ t("შესვლა","Login") }}</button>
+            <button class="btn-primary" style="flex:1"
+                    onclick="openModal('register');closeMobile()">{{ t("რეგისტრაცია","Sign up") }}</button>
+        </div>
     {% endif %}
-  </div>
+</div>
 
-  {# ══════════════════ CONTENT ══════════════════ #}
-  <main id="main-content">
+{# ══════════════════ CONTENT ══════════════════ #}
+<main id="main-content">
     {% block content %}{% endblock %}
-  </main>
+</main>
 
-  {# ══════════════════ FOOTER ══════════════════ #}
-  <footer>
+{# ══════════════════ FOOTER ══════════════════ #}
+<footer>
     <div class="footer-copy">© 2025 CodeMama. {{ t("ყველა უფლება დაცულია", "All rights reserved") }}</div>
     <div class="footer-links">
-      <a href="{{ url_for('main.index') }}">{{ t("მთავარი","Home") }}</a>
-      <a href="{{ url_for('about.index') }}">{{ t("შესახებ","About") }}</a>
-      <a href="{{ url_for('tasks.index') }}">{{ t("ამოცანები","Problems") }}</a>
-      <a href="{{ url_for('olympiad.index') }}">{{ t("ოლიმპიადა","Olympiad") }}</a>
-      <a href="{{ url_for('help.index') }}">{{ t("დახმარება","Help") }}</a>
+        <a href="{{ url_for('main.index') }}">{{ t("მთავარი","Home") }}</a>
+        <a href="{{ url_for('about.index') }}">{{ t("შესახებ","About") }}</a>
+        <a href="{{ url_for('tasks.index') }}">{{ t("ამოცანები","Problems") }}</a>
+        <a href="{{ url_for('olympiad.index') }}">{{ t("ოლიმპიადა","Olympiad") }}</a>
+        <a href="{{ url_for('help.index') }}">{{ t("დახმარება","Help") }}</a>
     </div>
     <div class="footer-social">
-      <a class="footer-soc-btn" href="#" aria-label="Facebook">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17">
-          <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-        </svg>
-      </a>
-      <a class="footer-soc-btn" href="#" aria-label="LinkedIn">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17">
-          <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4V9h4v2l.1-.1A5.5 5.5 0 0 1 16 8z"/>
-          <rect x="2" y="9" width="4" height="12"/>
-          <circle cx="4" cy="4" r="2"/>
-        </svg>
-      </a>
-      <a class="footer-soc-btn" href="#" aria-label="YouTube">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17">
-          <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/>
-          <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#0d0f17"/>
-        </svg>
-      </a>
+        <a class="footer-soc-btn" href="#" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+            </svg>
+        </a>
+        <a class="footer-soc-btn" href="#" aria-label="LinkedIn">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17">
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4V9h4v2l.1-.1A5.5 5.5 0 0 1 16 8z"/>
+                <rect x="2" y="9" width="4" height="12"/>
+                <circle cx="4" cy="4" r="2"/>
+            </svg>
+        </a>
+        <a class="footer-soc-btn" href="#" aria-label="YouTube">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17">
+                <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/>
+                <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#0d0f17"/>
+            </svg>
+        </a>
     </div>
-  </footer>
+</footer>
 
-  {# ══════════════════ AUTH MODAL ══════════════════ #}
-  {% if not current_user.is_authenticated %}
-  <div class="modal-overlay" id="authModal">
-    <div class="modal" style="position:relative">
-      <button class="modal-close" onclick="closeModal()">✕</button>
-      <div class="modal-title">{{ t("კეთილი იყოს შენი მობრძანება", "Welcome") }}</div>
-      <div class="modal-sub">{{ t("CodeMama-ში შესვლა ან რეგისტრაცია", "Login or register to CodeMama") }}</div>
-      <div class="modal-tabs">
-        <button class="modal-tab active" id="tabLogin"    onclick="switchTab('login')">{{ t("შესვლა","Login") }}</button>
-        <button class="modal-tab"        id="tabRegister" onclick="switchTab('register')">{{ t("რეგისტრაცია","Register") }}</button>
-      </div>
-      <div id="loginForm">
-        <div class="input-group">
-          <label>{{ t("ელ-ფოსტა","Email") }}</label>
-          <input type="email" id="loginEmail" placeholder="you@example.com"/>
+{# ══════════════════ AUTH MODAL ══════════════════ #}
+{% if not current_user.is_authenticated %}
+    <div class="modal-overlay" id="authModal">
+        <div class="modal" style="position:relative">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <div class="modal-title">{{ t("კეთილი იყოს შენი მობრძანება", "Welcome") }}</div>
+            <div class="modal-sub">{{ t("CodeMama-ში შესვლა ან რეგისტრაცია", "Login or register to CodeMama") }}</div>
+            <div class="modal-tabs">
+                <button class="modal-tab active" id="tabLogin"
+                        onclick="switchTab('login')">{{ t("შესვლა","Login") }}</button>
+                <button class="modal-tab" id="tabRegister"
+                        onclick="switchTab('register')">{{ t("რეგისტრაცია","Register") }}</button>
+            </div>
+            <div id="loginForm">
+                <div class="input-group">
+                    <label>{{ t("ელ-ფოსტა","Email") }}</label>
+                    <input type="email" id="loginEmail" placeholder="you@example.com"/>
+                </div>
+                <div class="input-group">
+                    <label>{{ t("პაროლი","Password") }}</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••"/>
+                </div>
+                <div class="form-error" id="loginError"></div>
+                <button class="btn-primary btn-block" onclick="submitLogin()">{{ t("შესვლა","Login") }}</button>
+                <div style="text-align:center;margin-top:.9rem">
+                    <a href="{{ url_for('auth.forgot_password') }}"
+                       style="font-size:.82rem;color:var(--muted);text-decoration:none;transition:color .2s"
+                       onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--muted)'">
+                        {{ t("პაროლი დაგავიწყდა?","Forgot password?") }}
+                    </a>
+                </div>
+            </div>
+            <div id="registerForm" style="display:none">
+                <div id="regFormFields">
+                    <div class="input-group">
+                        <label>{{ t("სახელი","Username") }}</label>
+                        <input type="text" id="regUsername" placeholder="giorgi_codes"/>
+                    </div>
+                    <div class="input-group">
+                        <label>{{ t("ელ-ფოსტა","Email") }}</label>
+                        <input type="email" id="regEmail" placeholder="you@example.com"/>
+                    </div>
+                    <div class="input-group">
+                        <label>{{ t("პაროლი","Password") }}</label>
+                        <input type="password" id="regPassword" placeholder="••••••••"/>
+                    </div>
+                    <div class="input-group">
+                        <label>{{ t("გაიმეორე პაროლი","Confirm Password") }}</label>
+                        <input type="password" id="regPassword2" placeholder="••••••••"/>
+                    </div>
+                    <div class="form-error" id="registerError"></div>
+                    <button class="btn-primary btn-block"
+                            onclick="submitRegister()">{{ t("რეგისტრაცია","Register") }}</button>
+                </div>
+                <div id="regSuccess" style="display:none;text-align:center;padding:1rem 0">
+                    <div style="font-size:2.5rem;margin-bottom:.6rem">📧</div>
+                    <div style="font-weight:800;font-size:1.05rem;margin-bottom:.4rem">{{ t("შეამოწმეთ ელ-ფოსტა!","Check your email!") }}</div>
+                    <div style="color:var(--muted);font-size:.88rem;line-height:1.6">{{ t("ვერიფიკაციის ლინკი გაგზავნილია. დაადასტურეთ ანგარიში და შედით.","Verification link sent. Confirm your account and log in.") }}</div>
+                </div>
+            </div>
         </div>
-        <div class="input-group">
-          <label>{{ t("პაროლი","Password") }}</label>
-          <input type="password" id="loginPassword" placeholder="••••••••"/>
-        </div>
-        <div class="form-error" id="loginError"></div>
-        <button class="btn-primary btn-block" onclick="submitLogin()">{{ t("შესვლა","Login") }}</button>
-        <div style="text-align:center;margin-top:.9rem">
-          <a href="{{ url_for('auth.forgot_password') }}" style="font-size:.82rem;color:var(--muted);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--muted)'">
-            {{ t("პაროლი დაგავიწყდა?","Forgot password?") }}
-          </a>
-        </div>
-      </div>
-      <div id="registerForm" style="display:none">
-        <div id="regFormFields">
-          <div class="input-group">
-            <label>{{ t("სახელი","Username") }}</label>
-            <input type="text" id="regUsername" placeholder="giorgi_codes"/>
-          </div>
-          <div class="input-group">
-            <label>{{ t("ელ-ფოსტა","Email") }}</label>
-            <input type="email" id="regEmail" placeholder="you@example.com"/>
-          </div>
-          <div class="input-group">
-            <label>{{ t("პაროლი","Password") }}</label>
-            <input type="password" id="regPassword" placeholder="••••••••"/>
-          </div>
-          <div class="input-group">
-            <label>{{ t("გაიმეორე პაროლი","Confirm Password") }}</label>
-            <input type="password" id="regPassword2" placeholder="••••••••"/>
-          </div>
-          <div class="form-error" id="registerError"></div>
-          <button class="btn-primary btn-block" onclick="submitRegister()">{{ t("რეგისტრაცია","Register") }}</button>
-        </div>
-        <div id="regSuccess" style="display:none;text-align:center;padding:1rem 0">
-          <div style="font-size:2.5rem;margin-bottom:.6rem">📧</div>
-          <div style="font-weight:800;font-size:1.05rem;margin-bottom:.4rem">{{ t("შეამოწმეთ ელ-ფოსტა!","Check your email!") }}</div>
-          <div style="color:var(--muted);font-size:.88rem;line-height:1.6">{{ t("ვერიფიკაციის ლინკი გაგზავნილია. დაადასტურეთ ანგარიში და შედით.","Verification link sent. Confirm your account and log in.") }}</div>
-        </div>
-      </div>
     </div>
-  </div>
-  {% endif %}
+{% endif %}
 
-  {# ══════════════════ JS ══════════════════ #}
-  <script>
+{# ══════════════════ JS ══════════════════ #}
+<script>
     const APP_LANG = "{{ lang }}";
-    const IS_AUTH  = {{ 'true' if current_user.is_authenticated else 'false' }};
+    const IS_AUTH = {{ 'true' if current_user.is_authenticated else 'false' }};
     const URLS = {
-      login:    "{{ url_for('auth.login') }}",
-      register: "{{ url_for('auth.register') }}",
-      dashboard:"{{ url_for('dashboard.index') }}",
+        login: "{{ url_for('auth.login') }}",
+        register: "{{ url_for('auth.register') }}",
+        dashboard: "{{ url_for('dashboard.index') }}",
     };
-  </script>
-  <script src="{{ url_for('static', filename='js/particles.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-  {% block extra_js %}{% endblock %}
+</script>
+<script src="{{ url_for('static', filename='js/particles.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>

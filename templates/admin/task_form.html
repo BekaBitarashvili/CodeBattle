@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Admin — {{ t("ტასკის რედაქტირება", "Edit Task") if action == 'edit' else t("ახალი ტასკი", "New Task") }}{% endblock %}
+{% block extra_css %}
+<style>
+.admin-wrap { max-width:900px; margin:0 auto; padding:calc(70px + 3rem) clamp(1rem,5vw,2rem) 6rem; }
+.admin-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; flex-wrap:wrap; gap:1rem; }
+.admin-title { font-size:1.8rem; font-weight:900; }
+.form-card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:2rem; margin-bottom:1.4rem; }
+.form-card-title { font-size:.75rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--orange); margin-bottom:1.4rem; }
+.form-group { margin-bottom:1.3rem; }
+.form-group label { display:block; font-size:.78rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:.5rem; }
+.form-group input,
+.form-group select,
+.form-group textarea { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:.8rem 1rem; color:var(--text); font-size:.95rem; outline:none; transition:border-color .2s; box-sizing:border-box; }
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color:var(--orange); }
+.form-group textarea { min-height:120px; resize:vertical; font-family:inherit; line-height:1.6; }
+.form-group textarea.code { font-family:'Space Mono',monospace; font-size:.82rem; min-height:200px; }
+.form-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.form-row-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:1rem; }
+.form-check { display:flex; align-items:center; gap:.6rem; cursor:pointer; font-size:.9rem; font-weight:600; }
+.form-check input { width:auto; }
+.form-actions { display:flex; gap:1rem; margin-top:1.6rem; }
+.hint { font-size:.75rem; color:var(--muted); margin-top:.4rem; line-height:1.5; }
+.divider { border:none; border-top:1px solid var(--border); margin:1.4rem 0; }
+@media(max-width:600px){ .form-row-2,.form-row-4{grid-template-columns:1fr;} }
+</style>
+{% endblock %}
+{% block content %}
+<div class="admin-wrap">
+  <div class="admin-header">
+    <div>
+      <div style="font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:.4rem">Admin Panel</div>
+      <h1 class="admin-title">
+        {{ "✏️ " + t("ტასკის რედაქტირება", "Edit Task") if action == 'edit' else "➕ " + t("ახალი ტასკი", "New Task") }}
+      </h1>
+    </div>
+    <a href="{{ url_for('admin.tasks') }}" class="btn-ghost" style="font-size:.9rem">← {{ t("უკან", "Back") }}</a>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div style="padding:.9rem 1.4rem;border-radius:12px;margin-bottom:1rem;font-weight:700;
+                  background:{% if cat=='success' %}#00b8a318{% else %}#f4433618{% endif %};
+                  border:1px solid {% if cat=='success' %}#00b8a340{% else %}#f4433640{% endif %};
+                  color:{% if cat=='success' %}#00b8a3{% else %}#f44336{% endif %}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST">
+
+    {# ── სახელი ── #}
+    <div class="form-card">
+      <div class="form-card-title">📝 {{ t("სახელი და კატეგორია", "Title & Category") }}</div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>{{ t("სახელი (ქართულად)", "Title (Georgian)") }} *</label>
+          <input type="text" name="title_ka" required
+                 value="{{ task.title_ka if task else '' }}"
+                 placeholder="გუნდის ამოცანა">
+        </div>
+        <div class="form-group">
+          <label>{{ t("სახელი (ინგლისურად)", "Title (English)") }} *</label>
+          <input type="text" name="title_en" required
+                 value="{{ task.title_en if task else '' }}"
+                 placeholder="Team Problem">
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>{{ t("კატეგორია (ქართულად)", "Category (Georgian)") }}</label>
+          <input type="text" name="category_ka"
+                 value="{{ task.category_ka if task else '' }}"
+                 placeholder="მათემატიკა">
+        </div>
+        <div class="form-group">
+          <label>{{ t("კატეგორია (ინგლისურად)", "Category (English)") }}</label>
+          <input type="text" name="category_en"
+                 value="{{ task.category_en if task else '' }}"
+                 placeholder="Mathematics">
+        </div>
+      </div>
+    </div>
+
+    {# ── პარამეტრები ── #}
+    <div class="form-card">
+      <div class="form-card-title">⚙️ {{ t("პარამეტრები", "Parameters") }}</div>
+      <div class="form-row-4">
+        <div class="form-group">
+          <label>{{ t("სიძნელე", "Difficulty") }} *</label>
+          <select name="difficulty" required>
+            <option value="easy"   {{ 'selected' if task and task.difficulty=='easy' }}>Easy</option>
+            <option value="medium" {{ 'selected' if task and task.difficulty=='medium' }}>Medium</option>
+            <option value="hard"   {{ 'selected' if task and task.difficulty=='hard' }}>Hard</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>XP</label>
+          <input type="number" name="xp" min="1"
+                 value="{{ task.xp if task else 30 }}">
+        </div>
+        <div class="form-group">
+          <label>{{ t("დრო (წამი)", "Time Limit (s)") }}</label>
+          <input type="number" name="time_limit" min="0.5" max="10" step="0.5"
+                 value="{{ task.time_limit if task else 2.0 }}">
+        </div>
+        <div class="form-group">
+          <label>{{ t("მეხსიერება (MB)", "Memory (MB)") }}</label>
+          <input type="number" name="memory_limit" min="64"
+                 value="{{ task.memory_limit if task else 256 }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-check">
+          <input type="checkbox" name="is_active"
+                 {{ 'checked' if (task and task.is_active) or not task else '' }}>
+          {{ t("აქტიური (ჩანს მომხმარებლებისთვის)", "Active (visible to users)") }}
+        </label>
+      </div>
+    </div>
+
+    {# ── აღწერა ── #}
+    <div class="form-card">
+      <div class="form-card-title">📄 {{ t("აღწერა", "Description") }}</div>
+      <div class="form-group">
+        <label>{{ t("აღწერა (ქართულად)", "Description (Georgian)") }}</label>
+        <textarea name="description_ka" placeholder="{{ t('ამოცანის პირობა ქართულად...', 'Task description in Georgian...') }}">{{ task.description_ka if task else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>{{ t("აღწერა (ინგლისურად)", "Description (English)") }}</label>
+        <textarea name="description_en" placeholder="Task description in English...">{{ task.description_en if task else '' }}</textarea>
+      </div>
+    </div>
+
+    {# ── test cases ── #}
+    <div class="form-card">
+      <div class="form-card-title">🧪 Test Cases</div>
+      <div class="form-group">
+        <label>JSON ფორმატი</label>
+        <textarea name="test_cases" class="code" placeholder='[
+  {"input": "5", "output": "25", "hidden": false},
+  {"input": "10", "output": "100", "hidden": true}
+]'>{{ task.test_cases if task else '[\n  {"input": "", "output": "", "hidden": false}\n]' }}</textarea>
+        <div class="hint">
+          • <strong>input</strong> — შეყვანის მნიშვნელობა<br>
+          • <strong>output</strong> — მოსალოდნელი გამოსავალი<br>
+          • <strong>hidden: true</strong> — მომხმარებელს არ ეჩვენება (დამალული test)
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary" style="padding:12px 32px">
+        {{ t("შენახვა", "Save") }} ✅
+      </button>
+      <a href="{{ url_for('admin.tasks') }}" class="btn-ghost" style="padding:12px 24px">
+        {{ t("გაუქმება", "Cancel") }}
+      </a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

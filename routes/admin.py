@@ -1,9 +1,10 @@
 import os
+import json
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, abort, flash
 from flask_login import current_user, login_required
 from extensions import db
-from models import Olympiad, OlympiadRegistration, User
+from models import Olympiad, OlympiadRegistration, User, Task, Submission
 from functools import wraps
 
 admin_bp = Blueprint("admin", __name__)
@@ -35,10 +36,12 @@ def dashboard():
     olympiads   = Olympiad.query.order_by(Olympiad.start_date.desc()).all()
     total_users = User.query.count()
     total_regs  = OlympiadRegistration.query.count()
+    total_tasks = Task.query.count()
     return render_template("admin/dashboard.html",
                            olympiads=olympiads,
                            total_users=total_users,
-                           total_regs=total_regs)
+                           total_regs=total_regs,
+                           total_tasks=total_tasks)
 
 
 # ── Olympiad Create ───────────────────────────
@@ -163,14 +166,113 @@ def user_edit(user_id):
 @admin_required
 def user_delete(user_id):
     u = User.query.get_or_404(user_id)
-    if u.email.lower() in [e.strip().lower() for e in os.environ.get("ADMIN_EMAILS","").split(",")]:
+    if u.email.lower() in [e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").split(",")]:
         flash("ადმინის წაშლა შეუძლებელია.", "danger")
         return redirect(url_for("admin.users"))
-    # წაშალე submissions და olympiad registrations
-    from models import Submission
     Submission.query.filter_by(user_id=user_id).delete()
     OlympiadRegistration.query.filter_by(user_id=user_id).delete()
     db.session.delete(u)
     db.session.commit()
     flash("მომხმარებელი წაიშალა.", "success")
     return redirect(url_for("admin.users"))
+
+
+# ── Tasks List ────────────────────────────────
+@admin_bp.route("/tasks")
+@login_required
+@admin_required
+def tasks():
+    search     = request.args.get("q", "").strip()
+    difficulty = request.args.get("difficulty", "")
+    query      = Task.query
+    if search:
+        query = query.filter(
+            Task.title_ka.ilike(f"%{search}%") |
+            Task.title_en.ilike(f"%{search}%")
+        )
+    if difficulty:
+        query = query.filter_by(difficulty=difficulty)
+    all_tasks = query.order_by(Task.id.asc()).all()
+    return render_template("admin/tasks.html", tasks=all_tasks, search=search, difficulty=difficulty)
+
+
+# ── Task New ──────────────────────────────────
+@admin_bp.route("/tasks/new", methods=["GET", "POST"])
+@login_required
+@admin_required
+def task_new():
+    if request.method == "POST":
+        try:
+            # test cases JSON ვალიდაცია
+            tc_raw = request.form.get("test_cases", "[]").strip()
+            json.loads(tc_raw)  # validate
+
+            t = Task(
+                title_ka       = request.form["title_ka"],
+                title_en       = request.form["title_en"],
+                difficulty     = request.form["difficulty"],
+                xp             = int(request.form.get("xp", 30)),
+                description_ka = request.form.get("description_ka", ""),
+                description_en = request.form.get("description_en", ""),
+                category_ka    = request.form.get("category_ka", ""),
+                category_en    = request.form.get("category_en", ""),
+                time_limit     = float(request.form.get("time_limit", 2.0)),
+                memory_limit   = int(request.form.get("memory_limit", 256)),
+                test_cases     = tc_raw,
+                is_active      = "is_active" in request.form,
+            )
+            db.session.add(t)
+            db.session.commit()
+            flash(f"ტასკი '{t.title_ka}' შეიქმნა! ✅", "success")
+            return redirect(url_for("admin.tasks"))
+        except json.JSONDecodeError:
+            flash("Test Cases — JSON ფორმატი არასწორია.", "danger")
+        except Exception as e:
+            flash(f"შეცდომა: {e}", "danger")
+    return render_template("admin/task_form.html", task=None, action="new")
+
+
+# ── Task Edit ─────────────────────────────────
+@admin_bp.route("/tasks/<int:task_id>/edit", methods=["GET", "POST"])
+@login_required
+@admin_required
+def task_edit(task_id):
+    t = Task.query.get_or_404(task_id)
+    if request.method == "POST":
+        try:
+            tc_raw = request.form.get("test_cases", "[]").strip()
+            json.loads(tc_raw)
+
+            t.title_ka       = request.form["title_ka"]
+            t.title_en       = request.form["title_en"]
+            t.difficulty     = request.form["difficulty"]
+            t.xp             = int(request.form.get("xp", t.xp))
+            t.description_ka = request.form.get("description_ka", "")
+            t.description_en = request.form.get("description_en", "")
+            t.category_ka    = request.form.get("category_ka", "")
+            t.category_en    = request.form.get("category_en", "")
+            t.time_limit     = float(request.form.get("time_limit", 2.0))
+            t.memory_limit   = int(request.form.get("memory_limit", 256))
+            t.test_cases     = tc_raw
+            t.is_active      = "is_active" in request.form
+            db.session.commit()
+            flash(f"ტასკი '{t.title_ka}' განახლდა! ✅", "success")
+            return redirect(url_for("admin.tasks"))
+        except json.JSONDecodeError:
+            flash("Test Cases — JSON ფორმატი არასწორია.", "danger")
+        except Exception as e:
+            flash(f"შეცდომა: {e}", "danger")
+    return render_template("admin/task_form.html", task=t, action="edit")
+
+
+# ── Task Delete ───────────────────────────────
+@admin_bp.route("/tasks/<int:task_id>/delete", methods=["POST"])
+@login_required
+@admin_required
+def task_delete(task_id):
+    t = Task.query.get_or_404(task_id)
+    Submission.query.filter_by(task_id=task_id).delete()
+    db.session.delete(t)
+    db.session.commit()
+    flash("ტასკი წაიშალა.", "success")
+    return redirect(url_for("admin.tasks"))

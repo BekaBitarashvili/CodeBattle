@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Admin — ტასკები{% endblock %}
+{% block extra_css %}
+<style>
+.admin-wrap { max-width:1100px; margin:0 auto; padding:calc(70px + 3rem) clamp(1rem,5vw,2rem) 6rem; }
+.admin-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; flex-wrap:wrap; gap:1rem; }
+.admin-title { font-size:1.8rem; font-weight:900; }
+.a-table-card { background:var(--card); border:1px solid var(--border); border-radius:20px; overflow:hidden; }
+.a-table-head { padding:1.2rem 2rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+.a-table-head h2 { font-size:1.05rem; font-weight:800; }
+.filters { display:flex; gap:.5rem; flex-wrap:wrap; }
+.filters input { background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:.5rem 1rem; color:var(--text); font-size:.88rem; outline:none; width:200px; }
+.filters input:focus { border-color:var(--orange); }
+.filters select { background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:.5rem 1rem; color:var(--text); font-size:.88rem; outline:none; cursor:pointer; }
+.filters button { background:var(--orange); color:#fff; border:none; border-radius:10px; padding:.5rem 1rem; font-weight:700; cursor:pointer; font-size:.88rem; }
+table { width:100%; border-collapse:collapse; }
+th { padding:.9rem 1.2rem; text-align:left; font-size:.7rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border); }
+td { padding:.9rem 1.2rem; border-bottom:1px solid var(--border); font-size:.88rem; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:var(--orange)06; }
+.diff-chip { font-size:.7rem; font-weight:800; padding:2px 10px; border-radius:6px; text-transform:uppercase; }
+.diff-chip.easy   { background:#00b8a318; color:#00b8a3; border:1px solid #00b8a340; }
+.diff-chip.medium { background:#ffc01e18; color:#ffc01e; border:1px solid #ffc01e40; }
+.diff-chip.hard   { background:#ff375f18; color:#ff375f; border:1px solid #ff375f40; }
+.active-chip   { font-size:.7rem; font-weight:800; padding:2px 8px; border-radius:6px; background:#00b8a318; color:#00b8a3; border:1px solid #00b8a340; }
+.inactive-chip { font-size:.7rem; font-weight:800; padding:2px 8px; border-radius:6px; background:#ffffff10; color:var(--muted); border:1px solid #ffffff20; }
+.td-actions { display:flex; gap:.5rem; }
+.btn-edit { font-size:.75rem; font-weight:700; color:var(--orange); text-decoration:none; padding:3px 10px; border:1px solid var(--orange)44; border-radius:7px; }
+.btn-edit:hover { background:var(--orange)12; }
+.btn-del { font-size:.75rem; font-weight:700; color:#f44336; padding:3px 10px; border:1px solid #f4433640; border-radius:7px; background:none; cursor:pointer; }
+.btn-del:hover { background:#f4433612; }
+.xp-badge { font-family:'Space Mono',monospace; font-size:.8rem; color:var(--orange); font-weight:700; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="admin-wrap">
+  <div class="admin-header">
+    <div>
+      <div style="font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:.4rem">Admin Panel</div>
+      <h1 class="admin-title">📋 {{ t("ტასკები", "Tasks") }}</h1>
+    </div>
+    <div style="display:flex;gap:.7rem;align-items:center">
+      <a href="{{ url_for('admin.task_new') }}" class="btn-primary" style="font-size:.82rem;padding:8px 18px;text-decoration:none">
+        + {{ t("ახალი ტასკი", "New Task") }}
+      </a>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn-ghost" style="font-size:.9rem">← {{ t("უკან", "Back") }}</a>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div style="padding:.9rem 1.4rem;border-radius:12px;margin-bottom:1rem;font-weight:700;
+                  background:{% if cat=='success' %}#00b8a318{% else %}#f4433618{% endif %};
+                  border:1px solid {% if cat=='success' %}#00b8a340{% else %}#f4433640{% endif %};
+                  color:{% if cat=='success' %}#00b8a3{% else %}#f44336{% endif %}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="a-table-card">
+    <div class="a-table-head">
+      <h2>{{ t("სულ", "Total") }}: {{ tasks|length }}</h2>
+      <form class="filters" method="GET">
+        <input type="text" name="q" value="{{ search }}" placeholder="{{ t('ძებნა...', 'Search...') }}">
+        <select name="difficulty">
+          <option value="">{{ t("ყველა", "All") }}</option>
+          <option value="easy"   {{ 'selected' if difficulty=='easy' }}>Easy</option>
+          <option value="medium" {{ 'selected' if difficulty=='medium' }}>Medium</option>
+          <option value="hard"   {{ 'selected' if difficulty=='hard' }}>Hard</option>
+        </select>
+        <button type="submit">🔍</button>
+      </form>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>{{ t("სახელი", "Title") }}</th>
+          <th>{{ t("სიძნელე", "Difficulty") }}</th>
+          <th>{{ t("კატეგორია", "Category") }}</th>
+          <th>XP</th>
+          <th>{{ t("სტატუსი", "Status") }}</th>
+          <th>{{ t("ამოხსნები", "Solves") }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for task in tasks %}
+        <tr>
+          <td style="color:var(--muted);font-family:'Space Mono',monospace;font-size:.78rem">{{ task.id }}</td>
+          <td style="font-weight:700;max-width:220px">
+            <div>{{ task.title_ka }}</div>
+            <div style="font-size:.75rem;color:var(--muted);font-weight:400">{{ task.title_en }}</div>
+          </td>
+          <td><span class="diff-chip {{ task.difficulty }}">{{ task.difficulty }}</span></td>
+          <td style="color:var(--muted);font-size:.82rem">{{ task.get_category(lang) or '—' }}</td>
+          <td><span class="xp-badge">{{ task.xp }} XP</span></td>
+          <td>
+            {% if task.is_active %}
+              <span class="active-chip">✅ {{ t("აქტიური", "Active") }}</span>
+            {% else %}
+              <span class="inactive-chip">⏸ {{ t("დამალული", "Hidden") }}</span>
+            {% endif %}
+          </td>
+          <td style="font-weight:700;color:var(--orange)">{{ task.solve_count() }}</td>
+          <td>
+            <div class="td-actions">
+              <a href="{{ url_for('admin.task_edit', task_id=task.id) }}" class="btn-edit">✏️</a>
+              <form method="POST" action="{{ url_for('admin.task_delete', task_id=task.id) }}"
+                    onsubmit="return confirm('{{ task.title_ka }} — {{ t('წაიშალოს?', 'Delete?') }}')">
+                <button type="submit" class="btn-del">🗑</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

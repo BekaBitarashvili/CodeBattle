@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="13" fill="#ff5722"/>
-  <text x="32" y="46" font-family="'Courier New',monospace" font-size="28" font-weight="900" fill="white" text-anchor="middle">&lt;/&gt;</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 30 100 100">
+  <rect x="60" y="30" width="100" height="100" rx="22" fill="#ff5722"></rect>
+  <text x="110" y="78" text-anchor="middle" font-family="monospace" font-weight="900" font-size="28" fill="white">C</text>
+  <text x="110" y="108" text-anchor="middle" font-family="monospace" font-weight="900" font-size="28" fill="white">M</text>
 </svg>

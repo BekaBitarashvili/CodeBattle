@@ -59,7 +59,7 @@ def _seed_initial_data():
         badges = [
             Badge(slug="first_blood",  name_ka="პირველი სისხლი",           name_en="First Blood",   emoji="🩸", description_ka="პირველი ამოხსნა",      description_en="First solve"),
             Badge(slug="warrior_7",    name_ka="7 დღის მეომარი",           name_en="7 Day Warrior", emoji="⚔️", description_ka="7 დღე streak",         description_en="7 day streak"),
-            Badge(slug="speed_demon",  name_ka="სისწრაფის დემონი",         name_en="Speed Demon",   emoji="⚡", description_ka="< 5 წთ-ში ამოხსნა",   description_en="Solved in < 5 min"),
+            Badge(slug="speed_demon",  name_ka="სისწრაფის დემონი",         name_en="Speed Demon",   emoji="⚡", description_ka="< 30 წმ-ში ამოხსნა",  description_en="Solved in < 30 sec"),
             Badge(slug="bug_hunter",   name_ka="ბაგ ჰანთერი",             name_en="Bug Hunter",    emoji="🐛", description_ka="პირველი bug-ის პოვნა", description_en="Found first bug"),
             Badge(slug="code_samurai", name_ka="კოდ სამურაი",             name_en="Code Samurai",  emoji="🥷", description_ka="50 ტასკი ამოხსნილი",   description_en="50 tasks solved"),
             Badge(slug="olympiad_win", name_ka="ოლიმპიადის გამარჯვებული", name_en="Olympiad Win",  emoji="🏆", description_ka="I ადგილი ოლიმპიადაში", description_en="1st place olympiad"),

@@ -160,5 +160,5 @@ def _check_badges(user, task, runtime_ms):
         award("first_blood")
     if user.solved_count() >= 50:
         award("code_samurai")
-    if runtime_ms and runtime_ms < 300:
+    if runtime_ms and runtime_ms < 30000:
         award("speed_demon")

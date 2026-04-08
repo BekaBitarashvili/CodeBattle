@@ -55,21 +55,27 @@ def create_app(config_class=Config):
 def _seed_initial_data():
     from models import Task, Badge, News
 
-    if not Badge.query.first():
-        badges = [
-            Badge(slug="first_blood",  name_ka="პირველი სისხლი",           name_en="First Blood",   emoji="🩸", description_ka="პირველი ამოხსნა",      description_en="First solve"),
-            Badge(slug="warrior_7",    name_ka="7 დღის მეომარი",           name_en="7 Day Warrior", emoji="⚔️", description_ka="7 დღე streak",         description_en="7 day streak"),
-            Badge(slug="speed_demon",  name_ka="სისწრაფის დემონი",         name_en="Speed Demon",   emoji="⚡", description_ka="< 30 წმ-ში ამოხსნა",  description_en="Solved in < 30 sec"),
-            Badge(slug="bug_hunter",   name_ka="ბაგ ჰანთერი",             name_en="Bug Hunter",    emoji="🐛", description_ka="პირველი bug-ის პოვნა", description_en="Found first bug"),
-            Badge(slug="code_samurai", name_ka="კოდ სამურაი",             name_en="Code Samurai",  emoji="🥷", description_ka="50 ტასკი ამოხსნილი",   description_en="50 tasks solved"),
-            Badge(slug="olympiad_win", name_ka="ოლიმპიადის გამარჯვებული", name_en="Olympiad Win",  emoji="🏆", description_ka="I ადგილი ოლიმპიადაში", description_en="1st place olympiad"),
-            Badge(slug="night_owl",    name_ka="ღამის ბუ",                 name_en="Night Owl",     emoji="🌙", description_ka="00:00–06:00 შესვლა",   description_en="Login at midnight"),
-            Badge(slug="sharpshooter", name_ka="სნაიპერი",                 name_en="Sharpshooter",  emoji="🎯", description_ka="100% სისწრაფე",        description_en="100% accuracy"),
-            Badge(slug="top10",        name_ka="ტოპ 10",                   name_en="Top 10",        emoji="🌟", description_ka="ლიდერბორდი Top 10",   description_en="Leaderboard Top 10"),
-            Badge(slug="on_fire",      name_ka="ცეცხლზეა",                name_en="On Fire",       emoji="🔥", description_ka="30 დღის streak",       description_en="30 day streak"),
-        ]
-        db.session.add_all(badges)
-        db.session.commit()
+    badge_defs = [
+        dict(slug="first_blood",  name_ka="პირველი სისხლი",           name_en="First Blood",   emoji="🩸", description_ka="პირველი ამოხსნა",      description_en="First solve"),
+        dict(slug="warrior_7",    name_ka="7 დღის მეომარი",           name_en="7 Day Warrior", emoji="⚔️", description_ka="7 დღე streak",         description_en="7 day streak"),
+        dict(slug="speed_demon",  name_ka="სისწრაფის დემონი",         name_en="Speed Demon",   emoji="⚡", description_ka="< 30 წმ-ში ამოხსნა",  description_en="Solved in < 30 sec"),
+        dict(slug="bug_hunter",   name_ka="ბაგ ჰანთერი",             name_en="Bug Hunter",    emoji="🐛", description_ka="პირველი bug-ის პოვნა", description_en="Found first bug"),
+        dict(slug="code_samurai", name_ka="კოდ სამურაი",             name_en="Code Samurai",  emoji="🥷", description_ka="50 ტასკი ამოხსნილი",   description_en="50 tasks solved"),
+        dict(slug="olympiad_win", name_ka="ოლიმპიადის გამარჯვებული", name_en="Olympiad Win",  emoji="🏆", description_ka="I ადგილი ოლიმპიადაში", description_en="1st place olympiad"),
+        dict(slug="night_owl",    name_ka="ღამის ბუ",                 name_en="Night Owl",     emoji="🌙", description_ka="00:00–06:00 შესვლა",   description_en="Login at midnight"),
+        dict(slug="sharpshooter", name_ka="სნაიპერი",                 name_en="Sharpshooter",  emoji="🎯", description_ka="100% სისწრაფე",        description_en="100% accuracy"),
+        dict(slug="top10",        name_ka="ტოპ 10",                   name_en="Top 10",        emoji="🌟", description_ka="ლიდერბორდი Top 10",   description_en="Leaderboard Top 10"),
+        dict(slug="on_fire",      name_ka="ცეცხლზეა",                name_en="On Fire",       emoji="🔥", description_ka="30 დღის streak",       description_en="30 day streak"),
+    ]
+    for d in badge_defs:
+        b = Badge.query.filter_by(slug=d["slug"]).first()
+        if b:
+            b.name_ka = d["name_ka"]; b.name_en = d["name_en"]
+            b.emoji = d["emoji"]
+            b.description_ka = d["description_ka"]; b.description_en = d["description_en"]
+        else:
+            db.session.add(Badge(**d))
+    db.session.commit()
 
     if not News.query.first():
         from datetime import datetime, timedelta
